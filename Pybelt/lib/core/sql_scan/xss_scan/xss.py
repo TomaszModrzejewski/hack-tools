@@ -15,7 +15,7 @@ def create_payload(url, script="alert('test');"):
     http://127.0.0.1/php?id=<script>alert('test');</script> """
     data = url.split("=")
     open_and_close_script = ("<script>", "</script>")
-    return data[0] + "=" + open_and_close_script[0] + script + open_and_close_script[1]
+    return f"{data[0]}={open_and_close_script[0]}{script}{open_and_close_script[1]}"
 
 
 def tamper_payload(scripted_url):
@@ -31,7 +31,7 @@ def tamper_payload(scripted_url):
             tampered.append(char.replace(char, tampering[char]))
         else:
             tampered.append(char)
-    return url + "=" + ''.join(tampered)
+    return f"{url}=" + ''.join(tampered)
 
 
 def verify_xss_vulnerable(context, scripted_url):
@@ -43,15 +43,11 @@ def verify_xss_vulnerable(context, scripted_url):
     script = scripted_url.split("=")[1]
     if script in context:
         return True
-    else:
-        LOGGER.warning("Basic tests failed, moving to tampered data..")
-        data = tamper_payload(scripted_url)
-        url_data_tampered = get_context(data)
-        script = data.split("=")[1]
-        if script in url_data_tampered:
-            return True
-        else:
-            return False
+    LOGGER.warning("Basic tests failed, moving to tampered data..")
+    data = tamper_payload(scripted_url)
+    url_data_tampered = get_context(data)
+    script = data.split("=")[1]
+    return script in url_data_tampered
 
 
 def main(url, proxy=None, headers=None):

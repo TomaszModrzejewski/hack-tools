@@ -124,10 +124,10 @@ class socksocket(socket.socket):
 	
 	def __init__(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0, _sock=None):
 		_orgsocket.__init__(self,family,type,proto,_sock)
-		if _defaultproxy != None:
-			self.__proxy = _defaultproxy
-		else:
+		if _defaultproxy is None:
 			self.__proxy = (None, None, None, None, None, None)
+		else:
+			self.__proxy = _defaultproxy
 		self.__proxysockname = None
 		self.__proxypeername = None
 	
@@ -138,7 +138,7 @@ class socksocket(socket.socket):
 		"""
 		data = ""
 		while len(data) < bytes:
-			data = data + self.recv(bytes-len(data))
+			data += self.recv(bytes-len(data))
 		return data
 	
 	def setproxy(self,proxytype=None,addr=None,port=None,rdns=True,username=None,password=None):
@@ -295,7 +295,7 @@ class socksocket(socket.socket):
 		# DNS name if remote resolving is required
 		# NOTE: This is actually an extension to the SOCKS4 protocol
 		# called SOCKS4A and may not be supported in all cases.
-		if rmtrslv==True:
+		if rmtrslv:
 			req = req + destaddr + "\x00"
 		self.sendall(req)
 		# Get the response from the server
@@ -307,28 +307,32 @@ class socksocket(socket.socket):
 		if resp[1] != "\x5A":
 			# Server returned an error
 			self.close()
-			if ord(resp[1]) in (91,92,93):
-				self.close()
-				raise Socks4Error((ord(resp[1]),_socks4errors[ord(resp[1])-90]))
-			else:
+			if ord(resp[1]) not in {91, 92, 93}:
 				raise Socks4Error((94,_socks4errors[4]))
+			self.close()
+			raise Socks4Error((ord(resp[1]),_socks4errors[ord(resp[1])-90]))
 		# Get the bound address/port
 		self.__proxysockname = (socket.inet_ntoa(resp[4:]),struct.unpack(">H",resp[2:4])[0])
-		if rmtrslv != None:
-			self.__proxypeername = (socket.inet_ntoa(ipaddr),destport)
-		else:
+		if rmtrslv is None:
 			self.__proxypeername = (destaddr,destport)
+
+		else:
+			self.__proxypeername = (socket.inet_ntoa(ipaddr),destport)
 	
 	def __negotiatehttp(self,destaddr,destport):
 		"""__negotiatehttp(self,destaddr,destport)
 		Negotiates a connection through an HTTP server.
 		"""
 		# If we need to resolve locally, we do this now
-		if self.__proxy[3] == False:
-			addr = socket.gethostbyname(destaddr)
-		else:
-			addr = destaddr
-		self.sendall("CONNECT " + addr + ":" + str(destport) + " HTTP/1.1\r\n" + "Host: " + destaddr + "\r\n\r\n")
+		addr = socket.gethostbyname(destaddr) if self.__proxy[3] == False else destaddr
+		self.sendall(
+			f"CONNECT {addr}:{str(destport)}"
+			+ " HTTP/1.1\r\n"
+			+ "Host: "
+			+ destaddr
+			+ "\r\n\r\n"
+		)
+
 		# We read the response until we get the string "\r\n\r\n"
 		resp = self.recv(1)
 		while resp.find("\r\n\r\n")==-1:
@@ -361,27 +365,18 @@ class socksocket(socket.socket):
 		if (type(destpair) in (list,tuple)==False) or (len(destpair)<2) or (type(destpair[0])!=str) or (type(destpair[1])!=int):
 			raise GeneralProxyError((5,_generalerrors[5]))
 		if self.__proxy[0] == PROXY_TYPE_SOCKS5:
-			if self.__proxy[2] != None:
-				portnum = self.__proxy[2]
-			else:
-				portnum = 1080
+			portnum = self.__proxy[2] if self.__proxy[2] != None else 1080
 			_orgsocket.connect(self,(self.__proxy[1],portnum))
 			self.__negotiatesocks5(destpair[0],destpair[1])
 		elif self.__proxy[0] == PROXY_TYPE_SOCKS4:
-			if self.__proxy[2] != None:
-				portnum = self.__proxy[2]
-			else:
-				portnum = 1080
+			portnum = self.__proxy[2] if self.__proxy[2] != None else 1080
 			_orgsocket.connect(self,(self.__proxy[1],portnum))
 			self.__negotiatesocks4(destpair[0],destpair[1])
 		elif self.__proxy[0] == PROXY_TYPE_HTTP:
-			if self.__proxy[2] != None:
-				portnum = self.__proxy[2]
-			else:
-				portnum = 8080
+			portnum = self.__proxy[2] if self.__proxy[2] != None else 8080
 			_orgsocket.connect(self,(self.__proxy[1],portnum))
 			self.__negotiatehttp(destpair[0],destpair[1])
-		elif self.__proxy[0] == None:
+		elif self.__proxy[0] is None:
 			_orgsocket.connect(self,(destpair[0],destpair[1]))
 		else:
 			raise GeneralProxyError((4,_generalerrors[4]))

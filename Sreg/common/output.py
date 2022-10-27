@@ -93,12 +93,11 @@ TEXT_ADD = ("<tr>\n"
 
 
 def output_init(name, output_type, passport):
-    file_name = "./reports/" + name + ".html"
-    file_object = open(file_name, 'w')
-    template_content = Template(TEXT_INIT)
-    write_content = template_content.safe_substitute(target=name, o_type=output_type, o_passport=passport)
-    file_object.write(write_content)
-    file_object.close()
+    file_name = f"./reports/{name}.html"
+    with open(file_name, 'w') as file_object:
+        template_content = Template(TEXT_INIT)
+        write_content = template_content.safe_substitute(target=name, o_type=output_type, o_passport=passport)
+        file_object.write(write_content)
 
 
 def output_finished(name):
@@ -110,10 +109,9 @@ def output_finished(name):
 
 
 def output_add(category, app_name, website, name, passport_type, icon, description):
-    file_name = "./reports/" + passport_type + "_" + name + ".html"
-    file_object = open(file_name, 'a')
-    template_content = Template(TEXT_ADD)
-    write_content = template_content.safe_substitute(website_a=website, website_b=website, icon=icon,
-                                                     app_name=app_name, description=description, category=category)
-    file_object.write(write_content)
-    file_object.close()
+    file_name = f"./reports/{passport_type}_{name}.html"
+    with open(file_name, 'a') as file_object:
+        template_content = Template(TEXT_ADD)
+        write_content = template_content.safe_substitute(website_a=website, website_b=website, icon=icon,
+                                                         app_name=app_name, description=description, category=category)
+        file_object.write(write_content)

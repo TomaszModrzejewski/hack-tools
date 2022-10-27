@@ -47,8 +47,8 @@ class Crack():
             for pass_ in PASSWORD_DIC:
                 pass_ = str(pass_.replace('{user}', user))
                 k = getattr(self,self.server)
-                result = k(user,pass_)
-                if result:return result
+                if result := k(user, pass_):
+                    return result
     def ftp(self,user,pass_):
         ftp = ftplib.FTP()
         try:
@@ -71,7 +71,7 @@ class Crack():
             sock.send(auth_data)
             result = sock.recv(1024)
             if result == "\x07\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00":
-                return "username:%s,password:%s" % (user,pass_)
+                return f"username:{user},password:{pass_}"
         except:
             pass
         finally:
@@ -133,27 +133,27 @@ class Crack():
             hladd=hex(ladd).replace('0x','')
             hpwd=binascii.b2a_hex(pass_)
             pp=binascii.b2a_hex(str(self.port))
-            address=hh+'3a'+pp
+            address = f'{hh}3a{pp}'
             hhost= binascii.b2a_hex(self.ip)
             data="0200020000000000123456789000000000000000000000000000000000000000000000000000ZZ5440000000000000000000000000000000000000000000000000000000000X3360000000000000000000000000000000000000000000000000000000000Y373933340000000000000000000000000000000000000000000000000000040301060a09010000000002000000000070796d7373716c000000000000000000000000000000000000000000000007123456789000000000000000000000000000000000000000000000000000ZZ3360000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000Y0402000044422d4c6962726172790a00000000000d1175735f656e676c69736800000000000000000000000000000201004c000000000000000000000a000000000000000000000000000069736f5f31000000000000000000000000000000000000000000000000000501353132000000030000000000000000"
             data1=data.replace(data[16:16+len(address)],address)
             data2=data1.replace(data1[78:78+len(husername)],husername)
             data3=data2.replace(data2[140:140+len(hpwd)],hpwd)
             if lusername>=16:
-                data4=data3.replace('0X',str(hex(lusername)).replace('0x',''))
+                data4 = data3.replace('0X', hex(lusername).replace('0x', ''))
             else:
-                data4=data3.replace('X',str(hex(lusername)).replace('0x',''))
+                data4 = data3.replace('X', hex(lusername).replace('0x', ''))
             if lpassword>=16:
-                data5=data4.replace('0Y',str(hex(lpassword)).replace('0x',''))
+                data5 = data4.replace('0Y', hex(lpassword).replace('0x', ''))
             else:
-                data5=data4.replace('Y',str(hex(lpassword)).replace('0x',''))
+                data5 = data4.replace('Y', hex(lpassword).replace('0x', ''))
             hladd = hex(ladd).replace('0x', '')
-            data6=data5.replace('ZZ',str(hladd))
+            data6 = data5.replace('ZZ', hladd)
             data7=binascii.a2b_hex(data6)
             sock.send(data7)
             packet=sock.recv(1024)
             if 'master' in packet:
-                return "username:%s,password:%s" % (user,pass_)
+                return f"username:{user},password:{pass_}"
         except:
             return 3
         finally:
@@ -189,12 +189,9 @@ class Crack():
         finally:
             s.close()
     def elasticsearch(self,user,pass_):
-        url = "http://"+self.ip+":"+str(self.port)+"/_cat"
+        url = f"http://{self.ip}:{str(self.port)}/_cat"
         data = urllib2.urlopen(url).read()
-        if '/_cat/master' in data:
-            return "unauthorized"
-        else:
-            return 3
+        return "unauthorized" if '/_cat/master' in data else 3
     def telnet(self,user,pass_):
         try:
             tn = telnetlib.Telnet(self.ip,self.port,self.timeout)
@@ -245,8 +242,7 @@ class Crack():
         hash_stage2 = hashlib.sha1(hash_stage1).digest()
         to = hashlib.sha1(scramble+hash_stage2).digest()
         reply = [ord(h1) ^ ord(h3) for (h1, h3) in zip(hash_stage1, to)]
-        hash = struct.pack('20B', *reply)
-        return hash
+        return struct.pack('20B', *reply)
     def get_scramble(self,packet):
         scramble,plugin = '',''
         try:
@@ -264,15 +260,18 @@ class Crack():
     def get_auth_data(self,user,password,scramble,plugin):
         user_hex = binascii.b2a_hex(user)
         pass_hex = binascii.b2a_hex(self.get_hash(password,scramble))
-        data = "85a23f0000000040080000000000000000000000000000000000000000000000" + user_hex + "0014" + pass_hex
-        if plugin:data+=binascii.b2a_hex(plugin)+ "0055035f6f73076f737831302e380c5f636c69656e745f6e616d65086c69626d7973716c045f7069640539323330360f5f636c69656e745f76657273696f6e06352e362e3231095f706c6174666f726d067838365f3634"
+        data = f"85a23f0000000040080000000000000000000000000000000000000000000000{user_hex}0014{pass_hex}"
+
+        if plugin:
+            data += f"{binascii.b2a_hex(plugin)}0055035f6f73076f737831302e380c5f636c69656e745f6e616d65086c69626d7973716c045f7069640539323330360f5f636c69656e745f76657273696f6e06352e362e3231095f706c6174666f726d067838365f3634"
+
         len_hex = hex(len(data)/2).replace("0x","")
-        auth_data = len_hex + "000001" +data
+        auth_data = f"{len_hex}000001{data}"
         return binascii.a2b_hex(auth_data)
     def make_response(self,username,password,salt):
         pu=hashlib.md5(password+username).hexdigest()
         buf=hashlib.md5(pu+salt).hexdigest()
-        return 'md5'+buf
+        return f'md5{buf}'
 class SendPingThr(threading.Thread):
     def __init__(self, ipPool, icmpPacket, icmpSocket, timeout=3):
         threading.Thread.__init__(self)
@@ -298,8 +297,9 @@ class Nscan:
         if self.__id  >= 65535:self.__id = 65534
     @property
     def __icmpSocket(self):
-        Sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
-        return Sock
+        return socket.socket(
+            socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp")
+        )
 
     def __inCksum(self, packet):
         if len(packet) & 1:
@@ -429,10 +429,8 @@ def pass_crack(server_type,host,port):
 def get_password_dic(path):
     pass_list = []
     try:
-        file_ = open(path,'r')
-        for password in file_:
-            pass_list.append(password.strip())
-        file_.close()
+        with open(path,'r') as file_:
+            pass_list.extend(password.strip() for password in file_)
         return pass_list
     except:
         return 'read dic error'
@@ -475,10 +473,7 @@ def get_ip_list(ip):
 def t_join(m_count):
     tmp_count = 0
     i = 0
-    if I < m_count:
-        count = len(ip_list) + 1
-    else:
-        count = m_count
+    count = len(ip_list) + 1 if I < m_count else m_count
     while True:
         time.sleep(4)
         ac_count = threading.activeCount()

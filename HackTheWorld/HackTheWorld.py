@@ -38,9 +38,7 @@ def rand():
 def xor(data, key):
 	l = len(key)
 	keyAsInt = map(ord, key)
-	return bytes(bytearray((
-	    (data[i] ^ keyAsInt[i % l]) for i in range(0,len(data))
-	)))
+	return bytes(bytearray(data[i] ^ keyAsInt[i % l] for i in range(len(data))))
 
 def writetofile(data, key, cipherType,lport):
 	shellcode = "\\x"
@@ -71,33 +69,31 @@ def writetofile(data, key, cipherType,lport):
 			print color(("[!] Could not write C++ code  [{}]".format(Filename)))
 
 def color(string, color=None):
-    attr = []
-    attr.append('1')
-    
-    if color:
-        if color.lower() == "red":
-            attr.append('31')
-        elif color.lower() == "green":
-            attr.append('32')
-        elif color.lower() == "blue":
-            attr.append('34')
-        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+	attr = ['1']
+	if color:
+	    if color.lower() == "red":
+	        attr.append('31')
+	    elif color.lower() == "green":
+	        attr.append('32')
+	    elif color.lower() == "blue":
+	        attr.append('34')
+	    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
 
-    else:
-        if string.strip().startswith("[!]"):
-            attr.append('31')
-            return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
-        elif string.strip().startswith("[+]"):
-            attr.append('32')
-            return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
-        elif string.strip().startswith("[?]"):
-            attr.append('33')
-            return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
-        elif string.strip().startswith("[*]"):
-            attr.append('34')
-            return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
-        else:
-            return string
+	else:
+	    if string.strip().startswith("[!]"):
+	        attr.append('31')
+	        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+	    elif string.strip().startswith("[+]"):
+	        attr.append('32')
+	        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+	    elif string.strip().startswith("[?]"):
+	        attr.append('33')
+	        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+	    elif string.strip().startswith("[*]"):
+	        attr.append('34')
+	        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+	    else:
+	        return string
 
 				
 

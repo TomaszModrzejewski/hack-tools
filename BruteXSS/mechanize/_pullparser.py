@@ -76,16 +76,11 @@ class Token:
         return iter((self.type, self.data, self.attrs))
     def __eq__(self, other):
         type, data, attrs = other
-        if (self.type == type and
-            self.data == data and
-            self.attrs == attrs):
-            return True
-        else:
-            return False
+        return self.type == type and self.data == data and self.attrs == attrs
     def __ne__(self, other): return not self.__eq__(other)
     def __repr__(self):
         args = ", ".join(map(repr, [self.type, self.data, self.attrs]))
-        return self.__class__.__name__+"(%s)" % args
+        return f"{self.__class__.__name__}({args})"
 
     def __str__(self):
         """
@@ -228,15 +223,12 @@ class _AbstractParser:
         while 1:
             while self._tokenstack:
                 token = self._tokenstack.pop(0)
-                if tokentypes:
-                    if token.type in tokentypes:
-                        return token
-                else:
+                if tokentypes and token.type in tokentypes or not tokentypes:
                     return token
-            data = self._fh.read(self.chunk)
-            if not data:
+            if data := self._fh.read(self.chunk):
+                self.feed(data)
+            else:
                 raise NoMoreTokensError()
-            self.feed(data)
 
     def unget_token(self, token):
         """Push a Token back onto the stack."""
@@ -256,10 +248,7 @@ class _AbstractParser:
             tok = self.get_token()
             if tok.type not in ["starttag", "endtag", "startendtag"]:
                 continue
-            if names:
-                if tok.data in names:
-                    return tok
-            else:
+            if names and tok.data in names or not names:
                 return tok
 
     def get_text(self, endat=None):
@@ -299,7 +288,7 @@ class _AbstractParser:
             if tok.type == "data":
                 text.append(tok.data)
             elif tok.type == "entityref":
-                t = unescape("&%s;"%tok.data, self._entitydefs, self.encoding)
+                t = unescape(f"&{tok.data};", self._entitydefs, self.encoding)
                 text.append(t)
             elif tok.type == "charref":
                 t = unescape_charref(tok.data, self.encoding)
@@ -312,10 +301,8 @@ class _AbstractParser:
                         if callable(alt):
                             text.append(alt(tok))
                         elif tok.attrs is not None:
-                            for k, v in tok.attrs:
-                                if k == alt:
-                                    text.append(v)
-                            text.append("[%s]" % tag_name.upper())
+                            text.extend(v for k, v in tok.attrs if k == alt)
+                            text.append(f"[{tag_name.upper()}]")
                 if endat is None or endat == (tok.type, tag_name):
                     self.unget_token(tok)
                     break
@@ -358,10 +345,7 @@ class _AbstractParser:
     def unescape_attr(self, name):
         return unescape(name, self._entitydefs, self.encoding)
     def unescape_attrs(self, attrs):
-        escaped_attrs = []
-        for key, val in attrs:
-            escaped_attrs.append((key, self.unescape_attr(val)))
-        return escaped_attrs
+        return [(key, self.unescape_attr(val)) for key, val in attrs]
 
 class PullParser(_AbstractParser, HTMLParser.HTMLParser):
     def __init__(self, *args, **kwds):

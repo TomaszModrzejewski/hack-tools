@@ -41,13 +41,13 @@ def main():
     queue = Queue()
     for x in xrange(1,255):
         for p in port:
+            ip = f'http://{checkIP}.{str(x)}'
             ip = 'http://' + checkIP + '.' + str(x)
-            print ip
-            url = ip + ':' + p
+            url = f'{ip}:{p}'
             queue.put(url)   
-  
-    for i in range(5): 
-        c = MyThread() 
+
+    for _ in range(5):
+        c = MyThread()
         c.start()
 
 if __name__ == '__main__':

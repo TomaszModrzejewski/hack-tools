@@ -27,14 +27,14 @@ class GzipConsumer:
                     i = i + 2 + x
                 if flag & 8: # filename
                     while ord(data[i]):
-                        i = i + 1
-                    i = i + 1
+                        i += 1
+                    i += 1
                 if flag & 16: # comment
                     while ord(data[i]):
-                        i = i + 1
-                    i = i + 1
+                        i += 1
+                    i += 1
                 if flag & 2: # crc
-                    i = i + 2
+                    i += 2
                 if len(data) < i:
                     raise IndexError("not enough data")
                 if data[:3] != "\x1f\x8b\x08":
@@ -46,14 +46,12 @@ class GzipConsumer:
             import zlib
             self.__data = ""
             self.__decoder = zlib.decompressobj(-zlib.MAX_WBITS)
-        data = self.__decoder.decompress(data)
-        if data:
+        if data := self.__decoder.decompress(data):
             self.__consumer.feed(data)
 
     def close(self):
         if self.__decoder:
-            data = self.__decoder.flush()
-            if data:
+            if data := self.__decoder.flush():
                 self.__consumer.feed(data)
         self.__consumer.close()
 

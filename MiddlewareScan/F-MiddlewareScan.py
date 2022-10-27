@@ -39,8 +39,9 @@ class ThreadNum(threading.Thread):
                     if port_status == True:
                         queue.put(":".join(['discern',task_host,task_port]))
                 elif task_type == 'discern':
-                    discern_type = scan_discern(task_type,task_host,task_port)
-                    if discern_type:
+                    if discern_type := scan_discern(
+                        task_type, task_host, task_port
+                    ):
                         queue.put(":".join([discern_type,task_host,task_port]))
                 else:
                     scan_vul(task_type,task_host,task_port)
@@ -75,20 +76,18 @@ def log(scan_type,host,port,info=''):
 def read_config(config_type):
     if config_type == 'discern':
         mark_list=[]
-        config_file = open('discern_config.ini','r')
-        for mark in config_file:
-            name,location,key,value = mark.strip().split("|")
-            mark_list.append([name,location,key,value])
-        config_file.close()
+        with open('discern_config.ini','r') as config_file:
+            for mark in config_file:
+                name,location,key,value = mark.strip().split("|")
+                mark_list.append([name,location,key,value])
         return mark_list
     elif config_type == 'plugin':
         plugin_list = {}
-        config_file = open('plugin_config.ini','r')
-        for plugin in config_file:
-            name,plugin_file_list = plugin.strip().split("|")
-            plugin_list[name]=[]
-            plugin_list[name] = plugin_file_list.split(",")
-        config_file.close()
+        with open('plugin_config.ini','r') as config_file:
+            for plugin in config_file:
+                name,plugin_file_list = plugin.strip().split("|")
+                plugin_list[name]=[]
+                plugin_list[name] = plugin_file_list.split(",")
         return plugin_list
         
 def scan_discern(scan_type,host,port):

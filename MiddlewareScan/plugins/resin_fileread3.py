@@ -9,6 +9,6 @@ def check(host,port,timeout):
     except:
         return 'NO'
     if "<h1>Directory of" in res_html:
-        info = vul_url + " Resin File Read And Directory Browsing Vul CVE:2007-2440"
-        return 'YES|'+info
+        info = f"{vul_url} Resin File Read And Directory Browsing Vul CVE:2007-2440"
+        return f'YES|{info}'
     return 'NO'

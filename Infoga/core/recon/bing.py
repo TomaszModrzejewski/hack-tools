@@ -30,7 +30,12 @@ class bing:
 
 	def search(self):
 		try:
-			resp = self.con.httplib("www.bing.com","/search?q=%40"+self.target,"SRCHHPGUSR=ADLT=DEMOTE&NRSLT=100")
+			resp = self.con.httplib(
+				"www.bing.com",
+				f"/search?q=%40{self.target}",
+				"SRCHHPGUSR=ADLT=DEMOTE&NRSLT=100",
+			)
+
 			self.results += resp
 		except Exception as error:
 			pass

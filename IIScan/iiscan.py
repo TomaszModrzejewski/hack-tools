@@ -15,9 +15,9 @@ class Scanner():
     def __init__(self, target):
         self.target = target.lower()
         if not self.target.startswith('http'):
-            self.target = 'http://%s' % self.target
+            self.target = f'http://{self.target}'
         self.scheme, self.netloc, self.path, params, query, fragment = \
-                     urlparse.urlparse(target)
+                         urlparse.urlparse(target)
         if self.path[-1:] != '/':    # ends with slash
             self.path += '/'
         self.alphanum = 'abcdefghijklmnopqrstuvwxyz0123456789_-'
@@ -67,7 +67,7 @@ class Scanner():
     def run(self):
         for c in self.alphanum:
             self.queue.put( (self.path + c, '.*') )    # filename, extension
-        for i in range(20):
+        for _ in range(20):
             t = threading.Thread(target=self._scan_worker)
             self.threads.append(t)
             t.start()

@@ -18,13 +18,25 @@ class SQLiScanner(object):
         self.agent = agent
         self.tamper = tamper
         self.int = random.randint(1, 13)
-        self.error_syntax = ["'", "--", ';', '"', "/*", "'/*", "'--", '"--', "';", '";', '`',
-                             " AND {int}={int}".format(int=self.int),
-                             " OR {int}={int}".format(int=self.int),
-                             " OR NOT {int}={int}".format(int=self.int),
-                             " UNION FALSE {}".format(RANDOM_COMMON_COLUMN.strip()),
-                             " UNION {}".format(RANDOM_COMMON_COLUMN.strip()),
-                             " AND {int}=IF(({int})),SLEEP({int}),{int}".format(int=self.int)]
+        self.error_syntax = [
+            "'",
+            "--",
+            ';',
+            '"',
+            "/*",
+            "'/*",
+            "'--",
+            '"--',
+            "';",
+            '";',
+            '`',
+            " AND {int}={int}".format(int=self.int),
+            " OR {int}={int}".format(int=self.int),
+            " OR NOT {int}={int}".format(int=self.int),
+            f" UNION FALSE {RANDOM_COMMON_COLUMN.strip()}",
+            f" UNION {RANDOM_COMMON_COLUMN.strip()}",
+            " AND {int}=IF(({int})),SLEEP({int}),{int}".format(int=self.int),
+        ]
 
     @staticmethod
     def obtain_inject_query(url):
@@ -40,11 +52,7 @@ class SQLiScanner(object):
         ...
         http://google.com/#?id=2 UNION FALSE table
         """
-        results = set()
-        for syntax in self.error_syntax:
-            results.add(self.url + syntax)
-
-        return results
+        return {self.url + syntax for syntax in self.error_syntax}
 
     def sqli_search(self):
         """ Search for SQL injection in the provided URL[error based injection] """
@@ -57,8 +65,10 @@ class SQLiScanner(object):
                     for regex in SQLI_ERROR_REGEX.keys():
                         if regex.findall(str(html)):
                             self.vulnerable = True
-                            sqli_info = "'{}' appears to be vulnerable to SQL injection ".format(self.url)
-                            sqli_info += "at ({}). The backend DBMS appears to be: {}.".format(query, SQLI_ERROR_REGEX[regex])
-                            return sqli_info
+                            return (
+                                f"'{self.url}' appears to be vulnerable to SQL injection "
+                                + f"at ({query}). The backend DBMS appears to be: {SQLI_ERROR_REGEX[regex]}."
+                            )
+
         if self.vulnerable is False:
-            return "%s is not vulnerable to SQL injection." % self.url
+            return f"{self.url} is not vulnerable to SQL injection."

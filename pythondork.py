@@ -29,14 +29,12 @@ def logo():
         print "|---------------------------------------------------------------|\n"
 	print W
 
-if sys.platform == 'linux' or sys.platform == 'linux2':
-  subprocess.call("clear", shell=True)
-  logo()
-  
+if sys.platform in ['linux', 'linux2']:
+	subprocess.call("clear", shell=True)
 else:
-  subprocess.call("cls", shell=True)
-  logo()
-  
+	subprocess.call("cls", shell=True)
+logo()
+
 log = "darkd0rk3r-sqli.txt"
 logfile = open(log, "a")
 lfi_log = "darkd0rk3r-lfi.txt"
@@ -96,7 +94,7 @@ sqlerrors = {'MySQL': 'error in your SQL syntax',
              'GetArray()' : 'GetArray()',
              'FetchRow()' : 'FetchRow()',
              'Input string was not in a correct format' : 'Input string was not in a correct format'}
-             
+
 
 header = ['Mozilla/4.0 (compatible; MSIE 5.0; SunOS 5.10 sun4u; X11)',
           'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.2pre) Gecko/20100207 Ubuntu/9.04 (jaunty) Namoroka/3.6.2pre',
@@ -113,8 +111,8 @@ header = ['Mozilla/4.0 (compatible; MSIE 5.0; SunOS 5.10 sun4u; X11)',
 	  'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0; ZoomSpider.net bot; .NET CLR 1.1.4322)',
 	  'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; QihooBot 1.0 qihoobot@qihoo.net)',
 	  'Mozilla/4.0 (compatible; MSIE 5.0; Windows ME) Opera 5.11 [en]']
-	  
-	  
+
+
 domains = {'All domains':['ac', 'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'an', 'ao',
            'aq', 'ar', 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb',
            'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bm', 'bn', 'bo',

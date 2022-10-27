@@ -37,15 +37,14 @@ class SubMain():
 
     @staticmethod
     def get_360(domain):
-        url_360 = 'http://webscan.360.cn/sub/index/?url=%s'%domain
+        url_360 = f'http://webscan.360.cn/sub/index/?url={domain}'
         scan_data = requests.get(url_360).text
         html_data = html.fromstring(scan_data)
-        sub_domains = html_data.xpath("//dd/strong/text()")
-        return sub_domains
+        return html_data.xpath("//dd/strong/text()")
 
     def get_links(self):
         url_link = 'http://i.links.cn/subdomain/'
-        link_post = 'domain=%s&b2=1&b3=1&b4=1' % self.submain
+        link_post = f'domain={self.submain}&b2=1&b3=1&b4=1'
         link_data = urllib2.Request(self.url_link, data=self.link_post)
         link_res = urllib2.urlopen(link_data).read()
         html_data = html.fromstring(link_res)
@@ -127,17 +126,15 @@ if __name__ == '__main__':
         result = run_method([options.url],1,options.need_check)
     if options.file:
         try:
+            urls = [i.strip() for i in open(options.file)]
             urls = []
-            for i in open(options.file).readlines():
-                urls.append(i.strip())
-            print '一共加载%s个url'%len(urls)
             result = run_method(list(set(urls)),options.thread_num,options.need_check) # 先开十个线程
         except Exception as e:
-            print('cannot open file, please check-->%s'%e)
+            print(f'cannot open file, please check-->{e}')
             sys.exit(1)
     if options.write_file:
-        filename = options.url if options.url else options.file
-        write_file(result,filename+'_subDomains.txt')
+        filename = options.url or options.file
+        write_file(result, f'{filename}_subDomains.txt')
     else:
         for i in result:
             if i:

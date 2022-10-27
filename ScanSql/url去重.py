@@ -1,6 +1,6 @@
 import urllib.parse
 url_set = set()
-for i in open('/tmp/out.json_1').readlines():
+for i in open('/tmp/out.json_1'):
     try:
         netloc = i.split('/')[2]
         if netloc not in url_set and '360' not in netloc:

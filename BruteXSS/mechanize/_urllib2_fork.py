@@ -85,9 +85,7 @@ def splithost(url):
         import re
         _hostprog = re.compile('^//([^/?]*)(.*)$')
 
-    match = _hostprog.match(url)
-    if match: return match.group(1, 2)
-    return None, url
+    return match.group(1, 2) if (match := _hostprog.match(url)) else (None, url)
 
 
 from urllib import (unwrap, unquote, splittype, quote,
@@ -173,10 +171,7 @@ class Request:
         raise AttributeError, attr
 
     def get_method(self):
-        if self.has_data():
-            return "POST"
-        else:
-            return "GET"
+        return "POST" if self.has_data() else "GET"
 
     # XXX these helper methods are lame
 
@@ -195,8 +190,8 @@ class Request:
     def get_type(self):
         if self.type is None:
             self.type, self.__r_type = splittype(self.__original)
-            if self.type is None:
-                raise ValueError, "unknown url type: %s" % self.__original
+        if self.type is None:
+            raise (ValueError, f"unknown url type: {self.__original}")
         return self.type
 
     def get_host(self):
@@ -259,7 +254,7 @@ class Request:
 
 class OpenerDirector:
     def __init__(self):
-        client_version = "Python-urllib/%s" % __version__
+        client_version = f"Python-urllib/{__version__}"
         self.addheaders = [('User-agent', client_version)]
         # manage the individual handlers
         self.handlers = []
@@ -304,8 +299,7 @@ class OpenerDirector:
             else:
                 continue
 
-            handlers = lookup.setdefault(kind, [])
-            if handlers:
+            if handlers := lookup.setdefault(kind, []):
                 bisect.insort(handlers, handler)
             else:
                 handlers.append(handler)
@@ -334,15 +328,15 @@ class OpenerDirector:
                 return result
 
     def _open(self, req, data=None):
-        result = self._call_chain(self.handle_open, 'default',
-                                  'default_open', req)
-        if result:
+        if result := self._call_chain(
+            self.handle_open, 'default', 'default_open', req
+        ):
             return result
 
         protocol = req.get_type()
-        result = self._call_chain(self.handle_open, protocol, protocol +
-                                  '_open', req)
-        if result:
+        if result := self._call_chain(
+            self.handle_open, protocol, f'{protocol}_open', req
+        ):
             return result
 
         return self._call_chain(self.handle_open, 'unknown',
@@ -353,16 +347,15 @@ class OpenerDirector:
             # XXX http[s] protocols are special-cased
             dict = self.handle_error['http'] # https is not different than http
             proto = args[2]  # YUCK!
-            meth_name = 'http_error_%s' % proto
+            meth_name = f'http_error_{proto}'
             http_err = 1
             orig_args = args
         else:
             dict = self.handle_error
-            meth_name = proto + '_error'
+            meth_name = f'{proto}_error'
             http_err = 0
         args = (dict, proto, meth_name) + args
-        result = self._call_chain(*args)
-        if result:
+        if result := self._call_chain(*args):
             return result
 
         if http_err:
@@ -423,12 +416,11 @@ class BaseHandler:
         pass
 
     def __lt__(self, other):
-        if not hasattr(other, "handler_order"):
-            # Try to preserve the old behavior of having custom classes
-            # inserted after default ones (works only for custom user
-            # classes which are not aware of handler_order).
-            return True
-        return self.handler_order < other.handler_order
+        return (
+            self.handler_order < other.handler_order
+            if hasattr(other, "handler_order")
+            else True
+        )
 
 
 class HTTPErrorProcessor(BaseHandler):
@@ -512,25 +504,25 @@ class HTTPRedirectHandler(BaseHandler):
         but another Handler might.
         """
         m = req.get_method()
-        if (code in (301, 302, 303, 307, "refresh") and m in ("GET", "HEAD")
-            or code in (301, 302, 303, "refresh") and m == "POST"):
-            # Strictly (according to RFC 2616), 301 or 302 in response
-            # to a POST MUST NOT cause a redirection without confirmation
-            # from the user (of urllib2, in this case).  In practice,
-            # essentially all clients do redirect in this case, so we do
-            # the same.
-            # TODO: really refresh redirections should be visiting; tricky to fix
-            new = _request.Request(
-                newurl,
-                headers=req.headers,
-                origin_req_host=req.get_origin_req_host(),
-                unverifiable=True,
-                visit=False,
-                timeout=req.timeout)
-            new._origin_req = getattr(req, "_origin_req", req)
-            return new
-        else:
+        if (
+            code not in (301, 302, 303, 307, "refresh") or m not in ("GET", "HEAD")
+        ) and (code not in (301, 302, 303, "refresh") or m != "POST"):
             raise HTTPError(req.get_full_url(), code, msg, headers, fp)
+        # Strictly (according to RFC 2616), 301 or 302 in response
+        # to a POST MUST NOT cause a redirection without confirmation
+        # from the user (of urllib2, in this case).  In practice,
+        # essentially all clients do redirect in this case, so we do
+        # the same.
+        # TODO: really refresh redirections should be visiting; tricky to fix
+        new = _request.Request(
+            newurl,
+            headers=req.headers,
+            origin_req_host=req.get_origin_req_host(),
+            unverifiable=True,
+            visit=False,
+            timeout=req.timeout)
+        new._origin_req = getattr(req, "_origin_req", req)
+        return new
 
     def http_error_302(self, req, fp, code, msg, headers):
         # Some servers (incorrectly) return multiple Location headers
@@ -661,9 +653,14 @@ class ProxyHandler(BaseHandler):
         assert hasattr(proxies, 'has_key'), "proxies must be a mapping"
         self.proxies = proxies
         for type, url in proxies.items():
-            setattr(self, '%s_open' % type,
-                    lambda r, proxy=url, type=type, meth=self.proxy_open: \
-                    meth(r, proxy, type))
+            setattr(
+                self,
+                f'{type}_open',
+                lambda r, proxy=url, type=type, meth=self.proxy_open: meth(
+                    r, proxy, type
+                ),
+            )
+
         if proxy_bypass is None:
             proxy_bypass = urllib.proxy_bypass
         self._proxy_bypass = proxy_bypass
@@ -679,22 +676,12 @@ class ProxyHandler(BaseHandler):
             return None
 
         if user and password:
-            user_pass = '%s:%s' % (unquote(user), unquote(password))
+            user_pass = f'{unquote(user)}:{unquote(password)}'
             creds = base64.b64encode(user_pass).strip()
-            req.add_header('Proxy-authorization', 'Basic ' + creds)
+            req.add_header('Proxy-authorization', f'Basic {creds}')
         hostport = unquote(hostport)
         req.set_proxy(hostport, proxy_type)
-        if orig_type == proxy_type or orig_type == 'https':
-            # let other handlers take care of it
-            return None
-        else:
-            # need to start over, because the other handlers don't
-            # grok the proxy's URL type
-            # e.g. if we have a constructor arg proxies like so:
-            # {'http': 'ftp://proxy.example.com'}, we may end up turning
-            # a request for http://acme.example.com/a into one for
-            # ftp://proxy.example.com/a
-            return self.parent.open(req)
+        return None if orig_type in [proxy_type, 'https'] else self.parent.open(req)
 
 
 class HTTPPasswordMgr:
@@ -706,11 +693,10 @@ class HTTPPasswordMgr:
         # uri could be a single URI or a sequence
         if isinstance(uri, basestring):
             uri = [uri]
-        if not realm in self.passwd:
+        if realm not in self.passwd:
             self.passwd[realm] = {}
         for default_port in True, False:
-            reduced_uri = tuple(
-                [self.reduce_uri(u, default_port) for u in uri])
+            reduced_uri = tuple(self.reduce_uri(u, default_port) for u in uri)
             self.passwd[realm][reduced_uri] = (user, passwd)
 
     def find_user_password(self, realm, authuri):
@@ -756,9 +742,7 @@ class HTTPPasswordMgr:
         if base[0] != test[0]:
             return False
         common = posixpath.commonprefix((base[1], test[1]))
-        if len(common) == len(base[1]):
-            return True
-        return False
+        return len(common) == len(base[1])
 
 
 class HTTPPasswordMgrWithDefaultRealm(HTTPPasswordMgr):
@@ -792,13 +776,8 @@ class AbstractBasicAuthHandler:
         self.add_password = self.passwd.add_password
 
     def http_error_auth_reqed(self, authreq, host, req, headers):
-        # host may be an authority (without userinfo) or a URL with an
-        # authority
-        # XXX could be multiple headers
-        authreq = headers.get(authreq, None)
-        if authreq:
-            mo = AbstractBasicAuthHandler.rx.search(authreq)
-            if mo:
+        if authreq := headers.get(authreq, None):
+            if mo := AbstractBasicAuthHandler.rx.search(authreq):
                 scheme, quote, realm = mo.groups()
                 if scheme.lower() == 'basic':
                     return self.retry_http_basic_auth(host, req, realm)
@@ -806,8 +785,8 @@ class AbstractBasicAuthHandler:
     def retry_http_basic_auth(self, host, req, realm):
         user, pw = self.passwd.find_user_password(realm, host)
         if pw is not None:
-            raw = "%s:%s" % (user, pw)
-            auth = 'Basic %s' % base64.b64encode(raw).strip()
+            raw = f"{user}:{pw}"
+            auth = f'Basic {base64.b64encode(raw).strip()}'
             if req.headers.get(self.auth_header, None) == auth:
                 return None
             newreq = copy.copy(req)
@@ -848,12 +827,11 @@ def randombytes(n):
     # if not.  It might be worthwhile to extend this function to use
     # other platform-specific mechanisms for getting random bytes.
     if os.path.exists("/dev/urandom"):
-        f = open("/dev/urandom")
-        s = f.read(n)
-        f.close()
+        with open("/dev/urandom") as f:
+            s = f.read(n)
         return s
     else:
-        L = [chr(random.randrange(0, 256)) for i in range(n)]
+        L = [chr(random.randrange(0, 256)) for _ in range(n)]
         return "".join(L)
 
 class AbstractDigestAuthHandler:
@@ -899,9 +877,8 @@ class AbstractDigestAuthHandler:
     def retry_http_digest_auth(self, req, auth):
         token, challenge = auth.split(' ', 1)
         chal = parse_keqv_list(parse_http_list(challenge))
-        auth = self.get_authorization(req, chal)
-        if auth:
-            auth_val = 'Digest %s' % auth
+        if auth := self.get_authorization(req, chal):
+            auth_val = f'Digest {auth}'
             if req.headers.get(self.auth_header, None) == auth_val:
                 return None
             newreq = copy.copy(req)
@@ -915,8 +892,10 @@ class AbstractDigestAuthHandler:
         # and server to avoid chosen plaintext attacks, to provide mutual
         # authentication, and to provide some message integrity protection.
         # This isn't a fabulous effort, but it's probably Good Enough.
-        dig = sha1_digest("%s:%s:%s:%s" % (self.nonce_count, nonce,
-                                           time.ctime(), randombytes(8)))
+        dig = sha1_digest(
+            f"{self.nonce_count}:{nonce}:{time.ctime()}:{randombytes(8)}"
+        )
+
         return dig[:16]
 
     def get_authorization(self, req, chal):
@@ -945,10 +924,8 @@ class AbstractDigestAuthHandler:
         else:
             entdig = None
 
-        A1 = "%s:%s:%s" % (user, realm, pw)
-        A2 = "%s:%s" % (req.get_method(),
-                        # XXX selector: what about proxies and full urls
-                        req.get_selector())
+        A1 = f"{user}:{realm}:{pw}"
+        A2 = f"{req.get_method()}:{req.get_selector()}"
         if qop == 'auth':
             if nonce == self.last_nonce:
                 self.nonce_count += 1
@@ -958,10 +935,10 @@ class AbstractDigestAuthHandler:
 
             ncvalue = '%08x' % self.nonce_count
             cnonce = self.get_cnonce(nonce)
-            noncebit = "%s:%s:%s:%s:%s" % (nonce, ncvalue, cnonce, qop, H(A2))
+            noncebit = f"{nonce}:{ncvalue}:{cnonce}:{qop}:{H(A2)}"
             respdig = KD(H(A1), noncebit)
         elif qop is None:
-            respdig = KD(H(A1), "%s:%s" % (nonce, H(A2)))
+            respdig = KD(H(A1), f"{nonce}:{H(A2)}")
         else:
             # XXX handle auth-int.
             logger = logging.getLogger("mechanize.auth")
@@ -972,7 +949,7 @@ class AbstractDigestAuthHandler:
         # XXX should the partial digests be encoded too?
 
         base = 'username="%s", realm="%s", nonce="%s", uri="%s", ' \
-               'response="%s"' % (user, realm, nonce, req.get_selector(),
+                   'response="%s"' % (user, realm, nonce, req.get_selector(),
                                   respdig)
         if opaque:
             base += ', opaque="%s"' % opaque
@@ -991,7 +968,7 @@ class AbstractDigestAuthHandler:
         elif algorithm == 'SHA':
             H = sha1_digest
         # XXX MD5-sess
-        KD = lambda s, d: H("%s:%s" % (s, d))
+        KD = lambda s, d: H(f"{s}:{d}")
         return H, KD
 
     def get_entity_digest(self, data, chal):
@@ -1198,7 +1175,7 @@ class HTTPCookieProcessor(BaseHandler):
 class UnknownHandler(BaseHandler):
     def unknown_open(self, req):
         type = req.get_type()
-        raise URLError('unknown url type: %s' % type)
+        raise URLError(f'unknown url type: {type}')
 
 def parse_keqv_list(l):
     """Parse list of key=value strings where keys are not duplicated."""
@@ -1257,11 +1234,10 @@ class FileHandler(BaseHandler):
     # Use local file or FTP depending on form of URL
     def file_open(self, req):
         url = req.get_selector()
-        if url[:2] == '//' and url[2:3] != '/':
-            req.type = 'ftp'
-            return self.parent.open(req)
-        else:
+        if url[:2] != '//' or url[2:3] == '/':
             return self.open_local_file(req)
+        req.type = 'ftp'
+        return self.parent.open(req)
 
     # names for the localhost
     names = None
@@ -1385,11 +1361,9 @@ class CacheFTPHandler(FTPHandler):
 
     def connect_ftp(self, user, passwd, host, port, dirs, timeout):
         key = user, host, port, '/'.join(dirs), timeout
-        if key in self.cache:
-            self.timeout[key] = time.time() + self.delay
-        else:
+        if key not in self.cache:
             self.cache[key] = ftpwrapper(user, passwd, host, port, dirs, timeout)
-            self.timeout[key] = time.time() + self.delay
+        self.timeout[key] = time.time() + self.delay
         self.check_cache()
         return self.cache[key]
 

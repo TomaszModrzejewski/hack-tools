@@ -38,9 +38,6 @@ def get_things(url):
                     my_format(url+i)
             if has_http:#有http->友情链接
                 http_format(i)
-            else:
-                #print('没用的url',i) #不带参数，无http关键词的链接
-                pass
     except Exception as e:
         #print(e)
         pass
@@ -48,11 +45,9 @@ def get_things(url):
 def http_format(url):
     #print(url,'---->')
     """用来格式化http链接的util类"""
-    www_path = url[0:url.rfind('/')]
+    www_path = url[:url.rfind('/')]
     if www_path not in http_dic:
-        http_dic[www_path] = url+'/'
-    else:
-        pass
+        http_dic[www_path] = f'{url}/'
      #   print('找到一个重复的url',url)
 
 def my_format(url):
@@ -62,9 +57,10 @@ def my_format(url):
     Attack_url = attack_url(url_seq[1]+url_seq[2],str)
     if Attack_url in dic:
         for i in str:
-            if i not in dic[Attack_url.www_path]:#应该取参数最多的那个
-                if len(str) > len(dic[Attack_url.www_path].params):
-                    dic[Attack_url.www_path].update = url+'/'
+            if i not in dic[Attack_url.www_path] and len(str) > len(
+                dic[Attack_url.www_path].params
+            ):
+                dic[Attack_url.www_path].update = f'{url}/'
     else:
         dic[Attack_url.www_path] = url
 

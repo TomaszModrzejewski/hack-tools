@@ -5,10 +5,7 @@ import socket
 import time
 import random
 def random_str(len): 
-    str1="" 
-    for i in range(len): 
-        str1+=(random.choice("ABCDEFGH")) 
-    return str1
+    return "".join((random.choice("ABCDEFGH")) for _ in range(len))
 def check(host,port,timeout):
     try:
         socket.setdefaulttimeout(timeout)

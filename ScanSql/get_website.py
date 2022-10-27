@@ -18,14 +18,12 @@ count = 0
 #----------------------------------------------------------------------
 def fuck_href(url):
     """"""
-    i = re.findall('_(.*?)\.html',url)
-    if i:
+    if i := re.findall('_(.*?)\.html', url):
         return i[0]
 #----------------------------------------------------------------------
 def fuck_weight(text):
     """"""
-    i = re.findall('themes/default/images/baidu/(.)\.gif',text)
-    if i:
+    if i := re.findall('themes/default/images/baidu/(.)\.gif', text):
         return i[0]
 #----------------------------------------------------------------------
 def shit(shitDemo,num_want,weight=0,file=None):
@@ -35,11 +33,9 @@ def shit(shitDemo,num_want,weight=0,file=None):
     #print('shitDemo-->',shitDemo)
     req = requests.get(shitDemo)
     soup = BeautifulSoup(req.text,'lxml')
-    tag = soup.find(class_='listCentent')
-    if tag :
+    if tag := soup.find(class_='listCentent'):
         for i in tag.contents:
-            fuck_we = fuck_weight(i.__str__())
-            if fuck_we:
+            if fuck_we := fuck_weight(i.__str__()):
                 if int(fuck_we) > weight:
                     count = count+1
                     shit_list.append(fuck_href(i.__str__()))
@@ -57,10 +53,7 @@ def run_get(url,page,num_want,file=None,weight=0):
     """"""
     global count
     count = num_want
-    if file:
-        fil = open(file,'w+')
-    else:
-        fil=sys.stdout
+    fil = open(file,'w+') if file else sys.stdout
     fil.write('模板url %s \n 权重大于%d的网站\n'%(url,weight))
     for i in range(2,page+1):
         try:

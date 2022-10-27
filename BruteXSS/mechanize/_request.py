@@ -37,4 +37,4 @@ class Request(_urllib2_fork.Request):
         self.timeout = timeout
 
     def __str__(self):
-        return "<Request for %s>" % self.get_full_url()
+        return f"<Request for {self.get_full_url()}>"

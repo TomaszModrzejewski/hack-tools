@@ -72,8 +72,7 @@ class AbstractHeadParser:
 
     def handle_entityref(self, name):
         #debug("%s", name)
-        self.handle_data(unescape(
-            '&%s;' % name, self._entitydefs, self._encoding))
+        self.handle_data(unescape(f'&{name};', self._entitydefs, self._encoding))
 
     def handle_charref(self, name):
         #debug("%s", name)
@@ -84,17 +83,13 @@ class AbstractHeadParser:
         return unescape(name, self._entitydefs, self._encoding)
 
     def unescape_attrs(self, attrs):
-        #debug("%s", attrs)
-        escaped_attrs = {}
-        for key, val in attrs.items():
-            escaped_attrs[key] = self.unescape_attr(val)
-        return escaped_attrs
+        return {key: self.unescape_attr(val) for key, val in attrs.items()}
 
     def unknown_entityref(self, ref):
-        self.handle_data("&%s;" % ref)
+        self.handle_data(f"&{ref};")
 
     def unknown_charref(self, ref):
-        self.handle_data("&#%s;" % ref)
+        self.handle_data(f"&#{ref};")
 
 
 class XHTMLCompatibleHeadParser(AbstractHeadParser,
@@ -107,10 +102,10 @@ class XHTMLCompatibleHeadParser(AbstractHeadParser,
         if tag not in self.head_elems:
             raise EndOfHeadError()
         try:
-            method = getattr(self, 'start_' + tag)
+            method = getattr(self, f'start_{tag}')
         except AttributeError:
             try:
-                method = getattr(self, 'do_' + tag)
+                method = getattr(self, f'do_{tag}')
             except AttributeError:
                 pass # unknown tag
             else:
@@ -122,7 +117,7 @@ class XHTMLCompatibleHeadParser(AbstractHeadParser,
         if tag not in self.head_elems:
             raise EndOfHeadError()
         try:
-            method = getattr(self, 'end_' + tag)
+            method = getattr(self, f'end_{tag}')
         except AttributeError:
             pass # unknown tag
         else:
@@ -208,7 +203,7 @@ class HTTPEquivProcessor(BaseHandler):
                 for hdr, val in html_headers:
                     # add a header
                     http_message.dict[hdr.lower()] = val
-                    text = hdr + ": " + val
+                    text = f"{hdr}: {val}"
                     for line in text.split("\n"):
                         http_message.headers.append(line + "\n")
         return response
@@ -311,7 +306,7 @@ class HTTPRobotRulesProcessor(BaseHandler):
             except AttributeError:
                 debug("%r instance does not support set_opener" %
                       self.rfp.__class__)
-            self.rfp.set_url(scheme+"://"+host+"/robots.txt")
+            self.rfp.set_url(f"{scheme}://{host}/robots.txt")
             self.rfp.set_timeout(request.timeout)
             self.rfp.read()
             self._host = host
@@ -319,14 +314,13 @@ class HTTPRobotRulesProcessor(BaseHandler):
         ua = request.get_header("User-agent", "")
         if self.rfp.can_fetch(ua, request.get_full_url()):
             return request
-        else:
-            # XXX This should really have raised URLError.  Too late now...
-            msg = "request disallowed by robots.txt"
-            raise RobotExclusionError(
-                request,
-                request.get_full_url(),
-                403, msg,
-                self.http_response_class(StringIO()), StringIO(msg))
+        # XXX This should really have raised URLError.  Too late now...
+        msg = "request disallowed by robots.txt"
+        raise RobotExclusionError(
+            request,
+            request.get_full_url(),
+            403, msg,
+            self.http_response_class(StringIO()), StringIO(msg))
 
     https_request = http_request
 

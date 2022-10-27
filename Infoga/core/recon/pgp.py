@@ -30,8 +30,11 @@ class pgp:
 
 	def search(self):
 		try:
-			resp = self.con.httplib("pgp.mit.edu","/pks/lookup?search="+self.target+"&op=index")
-			self.results += resp 
+			resp = self.con.httplib(
+				"pgp.mit.edu", f"/pks/lookup?search={self.target}&op=index"
+			)
+
+			self.results += resp
 		except Exception as error:
 			pass
 

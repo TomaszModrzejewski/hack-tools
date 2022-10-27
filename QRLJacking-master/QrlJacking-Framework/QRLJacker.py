@@ -451,7 +451,7 @@ Now you have a local webserver hosting your QRLJacking payload, Here's some inst
 </body>
 </html>"""
 
-	if type == "svg":
+	elif type == "svg":
 		code = """<html>
 <head>
 <title>"""+str(service_name)+"""</title>
@@ -470,9 +470,8 @@ Now you have a local webserver hosting your QRLJacking payload, Here's some inst
 </center>
 </body>
 </html>"""
-	f = open("index.html","w")
-	f.write(code)
-	f.close()
+	with open("index.html","w") as f:
+		f.write(code)
 
 def Add_website():
 	print "  1.Find image by class and its number method"

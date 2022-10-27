@@ -12,13 +12,12 @@ from lib.core.settings import create_dir
 
 def connect_and_pull_info():
     """ Connect to the proxy source and pull the proxies in JSON form """
-    results = {}
-    count = 0
     data = json.loads(urllib2.urlopen(PROXY_URL).read())
-    for i in range(0, 60):
-        count += 1
-        results[count] = data[i]
-    LOGGER.info("Found {} possible proxies, moving to connection attempts..".format(len(results)))
+    results = {count: data[i] for count, i in enumerate(range(60), start=1)}
+    LOGGER.info(
+        f"Found {len(results)} possible proxies, moving to connection attempts.."
+    )
+
     return results
 
 
@@ -28,9 +27,8 @@ def attempt_to_connect_to_proxies():
     prox_info = connect_and_pull_info()
     for i, proxy in enumerate(prox_info, start=1):
         if prox_info[i]["type"] == "HTTP":
-            candidate = "{}://{}:{}".format(prox_info[i]["type"],
-                                            prox_info[i]["ip"],
-                                            prox_info[i]["port"])
+            candidate = f'{prox_info[i]["type"]}://{prox_info[i]["ip"]}:{prox_info[i]["port"]}'
+
             opener = urllib2.build_opener(urllib2.ProxyHandler({"http": candidate}))
             urllib2.install_opener(opener)
             request = urllib2.Request("http://google.com")
@@ -38,10 +36,10 @@ def attempt_to_connect_to_proxies():
                 start_time = time.time()
                 urllib2.urlopen(request, timeout=10)
                 stop_time = time.time() - start_time
-                LOGGER.info("Successful: {}\n\t\tLatency: {}s\n\t\tOrigin: {}\n\t\tAnonymity: {}\n\t\tType: {}".format(
-                    candidate.lower(), stop_time, prox_info[i]["country"],
-                    prox_info[i]["anonymity"], prox_info[i]["type"]
-                ))
+                LOGGER.info(
+                    f'Successful: {candidate.lower()}\n\t\tLatency: {stop_time}s\n\t\tOrigin: {prox_info[i]["country"]}\n\t\tAnonymity: {prox_info[i]["anonymity"]}\n\t\tType: {prox_info[i]["type"]}'
+                )
+
                 results.append("http://" + prox_info[i]["ip"] + ":" + prox_info[i]["port"])
             except urllib2.HTTPError:
                 pass
@@ -53,10 +51,10 @@ def attempt_to_connect_to_proxies():
                 pass
             except socket.error:
                 pass
-    LOGGER.info("Found a total of {} proxies.".format(len(results)))
+    LOGGER.info(f"Found a total of {len(results)} proxies.")
     filename = create_random_filename()
     create_dir(PROXY_SCAN_RESULTS)
-    with open(PROXY_SCAN_RESULTS + "/" + filename + ".txt", "a+") as res:
+    with open(f"{PROXY_SCAN_RESULTS}/{filename}.txt", "a+") as res:
         for prox in results:
             res.write(prox + "\n")
-    LOGGER.info("Results saved to: {}".format(PROXY_SCAN_RESULTS + "/" + filename + ".txt"))
+    LOGGER.info(f"Results saved to: {PROXY_SCAN_RESULTS}/{filename}.txt")

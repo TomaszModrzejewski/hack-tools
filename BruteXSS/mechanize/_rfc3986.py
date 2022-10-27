@@ -66,8 +66,7 @@ SPLIT_MATCH = re.compile(
     r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?").match
 def urlsplit(absolute_uri):
     """Return scheme, authority, path, query, fragment."""
-    match = SPLIT_MATCH(absolute_uri)
-    if match:
+    if match := SPLIT_MATCH(absolute_uri):
         g = match.groups()
         return g[1], g[3], g[4], g[6], g[8]
 
@@ -144,10 +143,7 @@ def urljoin_parts(base_parts, reference_parts):
         else:
             if rpath == "":
                 tpath = path
-                if rquery is not None:
-                    tquery = rquery
-                else:
-                    tquery = query
+                tquery = rquery if rquery is not None else query
             else:
                 if rpath.startswith("/"):
                     tpath = remove_dot_segments(rpath)
@@ -234,11 +230,9 @@ def merge(base_authority, base_path, ref_path):
     # the RFC suggesting otherwise.  Perhaps I'm missing some obvious identity.
     #if base_authority is not None and base_path == "":
     if base_path == "":
-        return "/" + ref_path
+        return f"/{ref_path}"
     ii = base_path.rfind("/")
-    if ii >= 0:
-        return base_path[:ii+1] + ref_path
-    return ref_path
+    return base_path[:ii+1] + ref_path if ii >= 0 else ref_path
 
 if __name__ == "__main__":
     import doctest
