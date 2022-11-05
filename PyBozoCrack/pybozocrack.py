@@ -13,11 +13,9 @@ class MyOpener(FancyURLopener):
 
 
 def dictionary_attack(h, wordlist):
-    for word in wordlist:
-        if hashlib.md5(word).hexdigest() == h:
-            return word
-
-    return None
+    return next(
+        (word for word in wordlist if hashlib.md5(word).hexdigest() == h), None
+    )
 
 
 def format_it(hash, plaintext):
@@ -31,9 +29,7 @@ def crack_single_hash(h):
 
     wordlist = response.read().replace('.', ' ').replace(
         ':', ' ').replace('?', '').replace("('", ' ').replace("'", ' ').split(' ')
-    plaintext = dictionary_attack(h, set(wordlist))
-
-    return plaintext
+    return dictionary_attack(h, set(wordlist))
 
 
 class BozoCrack(object):

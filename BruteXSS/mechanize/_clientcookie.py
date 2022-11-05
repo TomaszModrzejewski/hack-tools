@@ -112,7 +112,7 @@ def domain_match(A, B):
     if not is_HDN(A):
         return False
     i = A.rfind(B)
-    has_form_nb = not (i == -1 or i == 0)
+    has_form_nb = i not in [-1, 0]
     return (
         has_form_nb and
         B.startswith(".") and
@@ -135,17 +135,10 @@ def user_domain_match(A, B):
     """
     A = A.lower()
     B = B.lower()
-    if not (liberal_is_HDN(A) and liberal_is_HDN(B)):
-        if A == B:
-            # equal IP addresses
-            return True
-        return False
+    if not liberal_is_HDN(A) or not liberal_is_HDN(B):
+        return A == B
     initial_dot = B.startswith(".")
-    if initial_dot and A.endswith(B):
-        return True
-    if not initial_dot and A == B:
-        return True
-    return False
+    return True if initial_dot and A.endswith(B) else not initial_dot and A == B
 
 cut_port_re = re.compile(r":\d+$")
 def request_host(request):
@@ -169,7 +162,7 @@ def eff_request_host(request):
     """Return a tuple (request-host, effective request-host name)."""
     erhn = req_host = request_host(request)
     if req_host.find(".") == -1 and not IPV4_RE.search(req_host):
-        erhn = req_host + ".local"
+        erhn = f"{req_host}.local"
     return req_host, erhn
 
 def eff_request_host_lc(request):
@@ -185,7 +178,7 @@ def request_path(request):
     url = request.get_full_url()
     path = escape_path(_rfc3986.urlsplit(url)[2])
     if not path.startswith("/"):
-        path = "/" + path
+        path = f"/{path}"
     return path
 
 def request_port(request):
@@ -265,7 +258,7 @@ def reach(h):
         b = h[i+1:]
         i = b.find(".")
         if is_HDN(h) and (i >= 0 or b == "local"):
-            return "."+b
+            return f".{b}"
     return h
 
 def is_third_party(request):
@@ -289,10 +282,7 @@ try:
 except NameError:
     # python 2.4
     def all(iterable):
-        for x in iterable:
-            if not x:
-                return False
-        return True
+        return all(iterable)
 
 
 class Cookie:
@@ -408,14 +398,10 @@ class Cookie:
         return not (self == other)
 
     def __str__(self):
-        if self.port is None: p = ""
-        else: p = ":"+self.port
+        p = "" if self.port is None else f":{self.port}"
         limit = self.domain + p + self.path
-        if self.value is not None:
-            namevalue = "%s=%s" % (self.name, self.value)
-        else:
-            namevalue = self.name
-        return "<Cookie %s for %s>" % (namevalue, limit)
+        namevalue = self.name if self.value is None else f"{self.name}={self.value}"
+        return f"<Cookie {namevalue} for {limit}>"
 
     def __repr__(self):
         args = []
@@ -426,10 +412,9 @@ class Cookie:
                      "secure", "expires", "discard", "comment", "comment_url",
                      ]:
             attr = getattr(self, name)
-            args.append("%s=%s" % (name, repr(attr)))
-        args.append("rest=%s" % repr(self._rest))
-        args.append("rfc2109=%s" % repr(self.rfc2109))
-        return "Cookie(%s)" % ", ".join(args)
+            args.append(f"{name}={repr(attr)}")
+        args.extend((f"rest={repr(self._rest)}", f"rfc2109={repr(self.rfc2109)}"))
+        return f'Cookie({", ".join(args)})'
 
 
 class CookiePolicy:
@@ -662,10 +647,10 @@ class DefaultCookiePolicy(CookiePolicy):
         self._blocked_domains = tuple(blocked_domains)
 
     def is_blocked(self, domain):
-        for blocked_domain in self._blocked_domains:
-            if user_domain_match(domain, blocked_domain):
-                return True
-        return False
+        return any(
+            user_domain_match(domain, blocked_domain)
+            for blocked_domain in self._blocked_domains
+        )
 
     def allowed_domains(self):
         """Return None, or the sequence of allowed domains (as a tuple)."""
@@ -679,10 +664,10 @@ class DefaultCookiePolicy(CookiePolicy):
     def is_not_allowed(self, domain):
         if self._allowed_domains is None:
             return False
-        for allowed_domain in self._allowed_domains:
-            if user_domain_match(domain, allowed_domain):
-                return False
-        return True
+        return not any(
+            user_domain_match(domain, allowed_domain)
+            for allowed_domain in self._allowed_domains
+        )
 
     def set_ok(self, cookie, request):
         """
@@ -696,7 +681,7 @@ class DefaultCookiePolicy(CookiePolicy):
         assert cookie.name is not None
 
         for n in "version", "verifiability", "name", "path", "domain", "port":
-            fn_name = "set_ok_"+n
+            fn_name = f"set_ok_{n}"
             fn = getattr(self, fn_name)
             if not fn(cookie, request):
                 return False
@@ -789,29 +774,31 @@ class DefaultCookiePolicy(CookiePolicy):
         if cookie.domain_specified:
             req_host, erhn = eff_request_host_lc(request)
             domain = cookie.domain
-            if domain.startswith("."):
-                undotted_domain = domain[1:]
-            else:
-                undotted_domain = domain
+            undotted_domain = domain[1:] if domain.startswith(".") else domain
             embedded_dots = (undotted_domain.find(".") >= 0)
             if not embedded_dots and domain != ".local":
                 debug("   non-local domain %s contains no embedded dot",
                       domain)
                 return False
-            if cookie.version == 0:
-                if (not erhn.endswith(domain) and
-                    (not erhn.startswith(".") and
-                     not ("."+erhn).endswith(domain))):
-                    debug("   effective request-host %s (even with added "
-                          "initial dot) does not end end with %s",
-                          erhn, domain)
-                    return False
-            if (cookie.version > 0 or
-                (self.strict_ns_domain & self.DomainRFC2965Match)):
-                if not domain_match(erhn, domain):
-                    debug("   effective request-host %s does not domain-match "
-                          "%s", erhn, domain)
-                    return False
+            if (
+                cookie.version == 0
+                and not erhn.endswith(domain)
+                and not erhn.startswith(".")
+                and not f".{erhn}".endswith(domain)
+            ):
+                debug("   effective request-host %s (even with added "
+                      "initial dot) does not end end with %s",
+                      erhn, domain)
+                return False
+            if (
+                (
+                    cookie.version > 0
+                    or (self.strict_ns_domain & self.DomainRFC2965Match)
+                )
+            ) and not domain_match(erhn, domain):
+                debug("   effective request-host %s does not domain-match "
+                      "%s", erhn, domain)
+                return False
             if (cookie.version > 0 or
                 (self.strict_ns_domain & self.DomainStrictNoDots)):
                 host_prefix = req_host[:-len(domain)]
@@ -825,10 +812,7 @@ class DefaultCookiePolicy(CookiePolicy):
     def set_ok_port(self, cookie, request):
         if cookie.port_specified:
             req_port = request_port(request)
-            if req_port is None:
-                req_port = "80"
-            else:
-                req_port = str(req_port)
+            req_port = "80" if req_port is None else str(req_port)
             for p in cookie.port.split(","):
                 try:
                     int(p)
@@ -856,7 +840,7 @@ class DefaultCookiePolicy(CookiePolicy):
 
         for n in ("version", "verifiability", "secure", "expires", "port",
                   "domain"):
-            fn_name = "return_ok_"+n
+            fn_name = f"return_ok_{n}"
             fn = getattr(self, fn_name)
             if not fn(cookie, request):
                 return False
@@ -925,7 +909,7 @@ class DefaultCookiePolicy(CookiePolicy):
             debug("   effective request-host name %s does not domain-match "
                   "RFC 2965 cookie domain %s", erhn, domain)
             return False
-        if cookie.version == 0 and not ("."+erhn).endswith(domain):
+        if cookie.version == 0 and not f".{erhn}".endswith(domain):
             debug("   request-host %s does not match Netscape cookie domain "
                   "%s", req_host, domain)
             return False
@@ -939,9 +923,9 @@ class DefaultCookiePolicy(CookiePolicy):
         # the side of letting cookies through.
         dotted_req_host, dotted_erhn = eff_request_host_lc(request)
         if not dotted_req_host.startswith("."):
-            dotted_req_host = "."+dotted_req_host
+            dotted_req_host = f".{dotted_req_host}"
         if not dotted_erhn.startswith("."):
-            dotted_erhn = "."+dotted_erhn
+            dotted_erhn = f".{dotted_erhn}"
         if not (dotted_req_host.endswith(domain) or
                 dotted_erhn.endswith(domain)):
             #debug("   request domain %s does not match cookie domain %s",
@@ -1147,7 +1131,7 @@ class CookieJar:
             if not version_set:
                 version_set = True
                 if version > 0:
-                    attrs.append("$Version=%s" % version)
+                    attrs.append(f"$Version={version}")
 
             # quote cookie value if necessary
             # (not for Netscape protocol, which already has any quotes
@@ -1162,7 +1146,7 @@ class CookieJar:
             if cookie.value is None:
                 attrs.append(cookie.name)
             else:
-                attrs.append("%s=%s" % (cookie.name, value))
+                attrs.append(f"{cookie.name}={value}")
             if version > 0:
                 if cookie.path_specified:
                     attrs.append('$Path="%s"' % cookie.path)
@@ -1175,7 +1159,7 @@ class CookieJar:
                 if cookie.port is not None:
                     p = "$Port"
                     if cookie.port_specified:
-                        p = p + ('="%s"' % cookie.port)
+                        p += '="%s"' % cookie.port
                     attrs.append(p)
 
         return attrs
@@ -1193,8 +1177,7 @@ class CookieJar:
         debug("add_cookie_header")
         cookies = self.cookies_for_request(request)
 
-        attrs = self._cookie_attrs(cookies)
-        if attrs:
+        if attrs := self._cookie_attrs(cookies):
             if not request.has_header("Cookie"):
                 request.add_unredirected_header("Cookie", "; ".join(attrs))
 
@@ -1294,7 +1277,7 @@ class CookieJar:
                 if (k in value_attrs) or (k in boolean_attrs):
                     if (v is None and
                         k not in ["port", "comment", "commenturl"]):
-                        debug("   missing value for %s attribute" % k)
+                        debug(f"   missing value for {k} attribute")
                         bad_cookie = True
                         break
                     standard[k] = v
@@ -1340,11 +1323,7 @@ class CookieJar:
             path = request_path(request)
             i = path.rfind("/")
             if i != -1:
-                if version == 0:
-                    # Netscape spec parts company from reality here
-                    path = path[:i]
-                else:
-                    path = path[:i+1]
+                path = path[:i] if version == 0 else path[:i+1]
             if len(path) == 0: path = "/"
 
         # set default domain
@@ -1357,22 +1336,21 @@ class CookieJar:
             req_host, erhn = eff_request_host_lc(request)
             domain = erhn
         elif not domain.startswith("."):
-            domain = "."+domain
+            domain = f".{domain}"
 
         # set default port
         port_specified = False
-        if port is not Absent:
-            if port is None:
-                # Port attr present, but has no value: default to request port.
-                # Cookie should then only be sent back on that port.
-                port = request_port(request)
-            else:
-                port_specified = True
-                port = re.sub(r"\s+", "", port)
-        else:
+        if port is Absent:
             # No port attr present.  Cookie can be sent back on any port.
             port = None
 
+        elif port is None:
+            # Port attr present, but has no value: default to request port.
+            # Cookie should then only be sent back on that port.
+            port = request_port(request)
+        else:
+            port_specified = True
+            port = re.sub(r"\s+", "", port)
         # set default expires and discard
         if expires is Absent:
             expires = None
@@ -1395,8 +1373,8 @@ class CookieJar:
 
         cookies = []
         for tup in cookie_tuples:
-            cookie = self._cookie_from_cookie_tuple(tup, request)
-            if cookie: cookies.append(cookie)
+            if cookie := self._cookie_from_cookie_tuple(tup, request):
+                cookies.append(cookie)
         return cookies
 
     def _process_rfc2109_cookies(self, cookies):
@@ -1473,8 +1451,11 @@ class CookieJar:
 
         """
         self._policy._now = self._now = int(time.time())
-        return [cookie for cookie in self._make_cookies(response, request)
-                if cookie.expires is None or not cookie.expires <= self._now]
+        return [
+            cookie
+            for cookie in self._make_cookies(response, request)
+            if cookie.expires is None or cookie.expires > self._now
+        ]
 
     def set_cookie_if_ok(self, cookie, request):
         """Set a cookie if policy says it's OK to do so.
@@ -1613,18 +1594,17 @@ class CookieJar:
     def __len__(self):
         """Return number of contained cookies."""
         i = 0
-        for cookie in self: i = i + 1
+        for _ in self:
+            i = i + 1
         return i
 
     def __repr__(self):
-        r = []
-        for cookie in self: r.append(repr(cookie))
-        return "<%s[%s]>" % (self.__class__, ", ".join(r))
+        r = [repr(cookie) for cookie in self]
+        return f'<{self.__class__}[{", ".join(r)}]>'
 
     def __str__(self):
-        r = []
-        for cookie in self: r.append(str(cookie))
-        return "<%s[%s]>" % (self.__class__, ", ".join(r))
+        r = [str(cookie) for cookie in self]
+        return f'<{self.__class__}[{", ".join(r)}]>'
 
 
 class LoadError(Exception): pass

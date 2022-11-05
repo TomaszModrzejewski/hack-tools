@@ -4,4 +4,3 @@ for i in open('/tmp/mmmmm'):
         print(json.loads(i.strip('\n'))['url'])
     except Exception as e:
         print(e)
-        pass

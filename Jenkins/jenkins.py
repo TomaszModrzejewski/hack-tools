@@ -98,15 +98,17 @@ class Jenkins(object):
         self.user_link = "asynchPeople"
         self.timeout = 4
         self.thread_num = thread_num
-        self.brust_url = urlparse.urljoin(self.url if self.url[len(self.url)-1] == '/' else self.url+'/', 'j_acegi_security_check')
+        self.brust_url = urlparse.urljoin(
+            self.url if self.url[len(self.url) - 1] == '/' else f'{self.url}/',
+            'j_acegi_security_check',
+        )
+
         self.pwd_list = []
         self.pwd_suffix = ['', '123','1234','12345','000']
 
         pwd_list = []
         with open(pwd_dic) as file:
-            for line in file.readlines():
-                pwd_list.append(line.strip(' \r\n'))
-
+            pwd_list.extend(line.strip(' \r\n') for line in file)
         self.pwd_list.extend(pwd_list)
 
     def __bAnonymous_access(self):
@@ -157,7 +159,11 @@ class Jenkins(object):
 
 
     def get_all_user_by_people(self):
-        user_link = urlparse.urljoin(self.url if self.url[len(self.url)-1] == '/' else self.url+'/', self.user_link)
+        user_link = urlparse.urljoin(
+            self.url if self.url[len(self.url) - 1] == '/' else f'{self.url}/',
+            self.user_link,
+        )
+
         try:
             html = requests.get(user_link, timeout = self.timeout, headers = HTTP_HEADERS).text
             soup = BeautifulSoup(html, "html.parser")
@@ -168,7 +174,7 @@ class Jenkins(object):
                     self.user_list.append(href.replace('/user/', '').strip('/'))
 
         except requests.exceptions.ConnectTimeout:
-            color_output("[-]....%s timeout!" % user_link)
+            color_output(f"[-]....{user_link} timeout!")
         except Exception:
             color_output("[-]....get_all_user_by_people error!")
 
@@ -332,7 +338,7 @@ if __name__ == '__main__':
     parser.add_option('-f', '--dic', dest = 'dic', type='string', default = 'comm_dic.txt', help = 'Dict file used to brute jenkins')
 
     (options, args) = parser.parse_args()
-    if options.url == None or options.url == "":
+    if options.url is None or options.url == "":
         parser.print_help()
         sys.exit()
 

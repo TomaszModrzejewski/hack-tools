@@ -4,10 +4,7 @@ import urllib2
 import time
 import random
 def random_str(len):
-    str1=""
-    for i in range(len):
-        str1+=(random.choice("ABCDEFGH"))
-    return str1
+    return "".join((random.choice("ABCDEFGH")) for _ in range(len))
 def run(host,port,timeout,auth):
     try:
         url = "http://%s:%d"%(host,int(port))

@@ -18,24 +18,18 @@ class PybeltConsole(Cmd):
         primary_spacer = ""
         descrip_spacer = ""
         secondary_spacer = ""
+        primary_spacer = " " * 2
         for key in TOOL_LIST.iterkeys():
             if len(key) == 3:
-                primary_spacer = " " * 2
                 secondary_spacer = " " * 10
-                descrip_spacer = " " * (magic_number - len(TOOL_LIST[key][1]))
             elif len(key) == 4:
-                primary_spacer = " " * 2
                 secondary_spacer = " " * 9
-                descrip_spacer = " " * (magic_number - len(TOOL_LIST[key][1]))
             else:
-                primary_spacer = " " * 2
                 secondary_spacer = " " * 11
-                descrip_spacer = " " * (magic_number - len(TOOL_LIST[key][1]))
-
-            print("{}{}{}{}{}{}".format(
-                primary_spacer, key, secondary_spacer,
-                TOOL_LIST[key][1], descrip_spacer, TOOL_LIST[key][0]
-            ))
+            descrip_spacer = " " * (magic_number - len(TOOL_LIST[key][1]))
+            print(
+                f"{primary_spacer}{key}{secondary_spacer}{TOOL_LIST[key][1]}{descrip_spacer}{TOOL_LIST[key][0]}"
+            )
 
     def do_run(self, command):
         """
@@ -74,7 +68,7 @@ class PybeltConsole(Cmd):
             t = raw_input("Enter what type (all for none): ")
             if t is None or t == "":
                 t = "all"
-            full_data = h + ":" + t
+            full_data = f"{h}:{t}"
             run_hash_cracker(full_data)
         elif command.lower() == "-p" or command.lower().startswith("port"):
             from lib.pointers import run_port_scan
@@ -103,15 +97,12 @@ class PybeltConsole(Cmd):
             from lib.pointers import run_dork_checker
             dork_file_path = raw_input("Enter full path to dork file: ")
             proxy = raw_input("Enter a proxy (enter for none): ")
-            if proxy is "":
-                proxy = None
-            else:
-                proxy = proxy
+            proxy = None if proxy is "" else proxy
             run_dork_checker(None, dork_file=dork_file_path, proxy=proxy)
         elif command.lower() == "quit":
             self.do_quit(None)
         else:
-            print("{}".format(self.help_menu()))
+            print(f"{self.help_menu()}")
 
     def do_quit(self, _):
         """

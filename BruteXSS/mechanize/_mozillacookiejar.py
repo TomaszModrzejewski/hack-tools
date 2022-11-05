@@ -62,8 +62,9 @@ class MozillaCookieJar(FileCookieJar):
         if not re.search(self.magic_re, magic):
             f.close()
             raise LoadError(
-                "%s does not look like a Netscape format cookies file" %
-                filename)
+                f"{filename} does not look like a Netscape format cookies file"
+            )
+
 
         try:
             while 1:
@@ -80,7 +81,7 @@ class MozillaCookieJar(FileCookieJar):
                     continue
 
                 domain, domain_specified, path, secure, expires, name, value = \
-                    line.split("\t", 6)
+                        line.split("\t", 6)
                 secure = (secure == "TRUE")
                 domain_specified = (domain_specified == "TRUE")
                 if name == "":
@@ -116,8 +117,7 @@ class MozillaCookieJar(FileCookieJar):
 
         except:
             reraise_unmasked_exceptions((IOError, LoadError))
-            raise LoadError("invalid Netscape format file %s: %s" %
-                            (filename, line))
+            raise LoadError(f"invalid Netscape format file {filename}: {line}")
 
     def save(self, filename=None, ignore_discard=False, ignore_expires=False):
         if filename is None:
@@ -136,14 +136,9 @@ class MozillaCookieJar(FileCookieJar):
                 if not ignore_expires and cookie.is_expired(now):
                     debug("   Not saving %s: expired", cookie.name)
                     continue
-                if cookie.secure: secure = "TRUE"
-                else: secure = "FALSE"
-                if cookie.domain.startswith("."): initial_dot = "TRUE"
-                else: initial_dot = "FALSE"
-                if cookie.expires is not None:
-                    expires = str(cookie.expires)
-                else:
-                    expires = ""
+                secure = "TRUE" if cookie.secure else "FALSE"
+                initial_dot = "TRUE" if cookie.domain.startswith(".") else "FALSE"
+                expires = str(cookie.expires) if cookie.expires is not None else ""
                 if cookie.value is None:
                     # cookies.txt regards 'Set-Cookie: foo' as a cookie
                     # with no name, whereas cookielib regards it as a

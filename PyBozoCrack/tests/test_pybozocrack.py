@@ -19,14 +19,10 @@ class TestPybozocrack(unittest.TestCase):
         self.hash = "d0763edaa9d9bd2a9516280e9044d885"
         self.plaintext = "monkey"
 
-        file = open('test', 'w')
-        file.write('fcf1eed8596699624167416a1e7e122e\nbed128365216c019988915ed3add75fb')
-        file.close()
-		
-        file = open('cache', 'w')
-        file.write('1:2\n')
-        file.close()
-
+        with open('test', 'w') as file:
+            file.write('fcf1eed8596699624167416a1e7e122e\nbed128365216c019988915ed3add75fb')
+        with open('cache', 'w') as file:
+            file.write('1:2\n')
         self.cracker = pybozocrack.BozoCrack('test')
 
 
@@ -58,7 +54,10 @@ class TestPybozocrack(unittest.TestCase):
         self.assertIsNone(pybozocrack.dictionary_attack(self.hash, ['zebra', '123']))
 		
     def test_format_it(self):
-        self.assertEqual(pybozocrack.format_it(self.hash, self.plaintext), "{}:{}".format(self.hash, self.plaintext))
+        self.assertEqual(
+            pybozocrack.format_it(self.hash, self.plaintext),
+            f"{self.hash}:{self.plaintext}",
+        )
 
     def test_crack_single_hash(self):
         self.assertEqual(pybozocrack.crack_single_hash(self.hash), self.plaintext)

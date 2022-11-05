@@ -30,44 +30,26 @@ no_tag = ['n', 'N']
 
 def couchScan(target,port,pingIt):
     if pingIt == True:
-        test = os.system("ping -c 1 -n -W 1 " + ip + ">/dev/null")
+        test = os.system(f"ping -c 1 -n -W 1 {ip}>/dev/null")
 
-        if test == 0:
-            try:
-                conn = couchdb.Server("http://" + str(target) + ":" + str(port) + "/")
-
-                try:
-                    dbVer = conn.version()
-                    return [0,dbVer]
-
-                except couchdb.http.Unauthorized:
-                    return [1,None]
-
-                except:
-                    return [2,None]
-
-            except:
-                return [3,None]
-
-        else:
+        if test != 0:
             return [4,None]
 
-    else:
+    try:
+        conn = couchdb.Server(f"http://{str(target)}:{str(port)}/")
+
         try:
-            conn = couchdb.Server("http://" + str(target) + ":" + str(port) +"/")
+            dbVer = conn.version()
+            return [0,dbVer]
 
-            try:
-                dbVer = conn.version()
-                return [0,dbVer]
-
-            except couchdb.http.Unauthorized:
-                return [1,None]
-
-            except:
-                return [2,None]
+        except couchdb.http.Unauthorized:
+            return [1,None]
 
         except:
-            return [3,None]
+            return [2,None]
+
+    except:
+        return [3,None]
 
 
 def netAttacks(target,port, myIP):
@@ -157,13 +139,9 @@ def getPlatInfo(couchConn, target):
 
 def enumAtt(conn,target):
     dbList = []
-    print "Enumerating all attachments..."
-
-    for db in conn:
-        dbList.append(db)
-
+    dbList = list(conn)
     for dbName in dbList:
-        r = requests.get("http://" + target + ":" + str(port) + "/" + dbName + "/_all_docs" )
+        r = requests.get(f"http://{target}:{str(port)}/{dbName}/_all_docs")
         dbDict = r.json()
 
 

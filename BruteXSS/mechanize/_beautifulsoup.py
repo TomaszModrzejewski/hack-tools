@@ -143,8 +143,7 @@ class PageElement:
         """Returns the closest parent of this Tag that matches the given
         criteria."""
         r = Null
-        l = self.fetchParents(name, attrs, 1)
-        if l:
+        if l := self.fetchParents(name, attrs, 1):
             r = l[0]
         return r
     firstParent = findParent
@@ -158,8 +157,7 @@ class PageElement:
 
     def _first(self, method, name, attrs, text):
         r = Null
-        l = method(name, attrs, text, 1)
-        if l:
+        if l := method(name, attrs, text, 1):
             r = l[0]
         return r
     
@@ -177,19 +175,18 @@ class PageElement:
                 break
             found = None
             if isinstance(i, Tag):
-                if not text:
-                    if not name or self._matches(i, name):
-                        match = True
-                        for attr, matchAgainst in attrs.items():
-                            check = i.get(attr)
-                            if not self._matches(check, matchAgainst):
-                                match = False
-                                break
-                        if match:
-                            found = i
+                if not text and (not name or self._matches(i, name)):
+                    match = True
+                    for attr, matchAgainst in attrs.items():
+                        check = i.get(attr)
+                        if not self._matches(check, matchAgainst):
+                            match = False
+                            break
+                    if match:
+                        found = i
             elif text:
                 if self._matches(i, text):
-                    found = i                    
+                    found = i
             if found:
                 results.append(found)
                 if limit and len(results) >= limit:
@@ -234,10 +231,11 @@ class PageElement:
         # If given a list of items, return true if the list contains a
         # text element that matches.
         if isList(chunk) and not isinstance(chunk, Tag):
-            for tag in chunk:
-                if isinstance(tag, NavigableText) and self._matches(tag, howToMatch):
-                    return True
-            return False
+            return any(
+                isinstance(tag, NavigableText) and self._matches(tag, howToMatch)
+                for tag in chunk
+            )
+
         if callable(howToMatch):
             return howToMatch(chunk)
         if isinstance(chunk, Tag):
@@ -279,7 +277,7 @@ class Tag(PageElement):
     def __init__(self, name, attrs=None, parent=Null, previous=Null):
         "Basic constructor."
         self.name = name
-        if attrs == None:
+        if attrs is None:
             attrs = []
         self.attrs = attrs
         self.contents = []
@@ -312,13 +310,13 @@ class Tag(PageElement):
         "A tag is non-None even if it has no contents."
         return True
 
-    def __setitem__(self, key, value):        
+    def __setitem__(self, key, value):
         """Setting tag[key] sets the value of the 'key' attribute for the
         tag."""
         self._getAttrMap()
         self.attrMap[key] = value
         found = False
-        for i in range(0, len(self.attrs)):
+        for i in range(len(self.attrs)):
             if self.attrs[i][0] == key:
                 self.attrs[i] = (key, value)
                 found = True
@@ -357,10 +355,10 @@ class Tag(PageElement):
         same attributes in a different order. Should this be fixed?"""
         if not hasattr(other, 'name') or not hasattr(other, 'attrs') or not hasattr(other, 'contents') or self.name != other.name or self.attrs != other.attrs or len(self) != len(other):
             return False
-        for i in range(0, len(self.contents)):
-            if self.contents[i] != other.contents[i]:
-                return False
-        return True
+        return all(
+            self.contents[i] == other.contents[i]
+            for i in range(len(self.contents))
+        )
 
     def __ne__(self, other):
         """Returns true iff this tag is not identical to the other tag,
@@ -384,33 +382,29 @@ class Tag(PageElement):
         
         attrs = []
         if self.attrs:
-            for key, val in self.attrs:
-                attrs.append('%s="%s"' % (key, val))
+            attrs.extend('%s="%s"' % (key, val) for key, val in self.attrs)
         close = ''
         closeTag = ''
         if self.isSelfClosing():
             close = ' /'
         else:
-            closeTag = '</%s>' % self.name
-        indentIncrement = None        
+            closeTag = f'</{self.name}>'
+        indentIncrement = None
         if showStructureIndent != None:
             indentIncrement = showStructureIndent
             if not self.hidden:
                 indentIncrement += 1
-        contents = self.renderContents(indentIncrement, needUnicode=needUnicode)        
+        contents = self.renderContents(indentIncrement, needUnicode=needUnicode)
         if showStructureIndent:
             space = '\n%s' % (' ' * showStructureIndent)
         if self.hidden:
             s = contents
         else:
             s = []
-            attributeString = ''
-            if attrs:
-                attributeString = ' ' + ' '.join(attrs)            
+            attributeString = ' ' + ' '.join(attrs) if attrs else ''
             if showStructureIndent:
                 s.append(space)
-            s.append('<%s%s%s>' % (self.name, attributeString, close))
-            s.append(contents)
+            s.extend((f'<{self.name}{attributeString}{close}>', contents))
             if closeTag and showStructureIndent != None:
                 s.append(space)
             s.append(closeTag)
@@ -440,9 +434,8 @@ class Tag(PageElement):
             else:
                 text = str(c)
             if text:
-                if showStructureIndent != None:
-                    if text[-1] == '\n':
-                        text = text[:-1]
+                if showStructureIndent != None and text[-1] == '\n':
+                    text = text[:-1]
                 s.append(text)
         return ''.join(s)    
 
@@ -466,8 +459,7 @@ class Tag(PageElement):
         """Return only the first child of this
         Tag matching the given criteria."""
         r = Null
-        l = self.fetch(name, attrs, recursive, text, 1)
-        if l:
+        if l := self.fetch(name, attrs, recursive, text, 1):
             r = l[0]
         return r
     findChild = first
@@ -483,9 +475,7 @@ class Tag(PageElement):
         callable that takes a string and returns whether or not the
         string matches for some custom definition of 'matches'. The
         same is true of the tag name."""
-        generator = self.recursiveChildGenerator
-        if not recursive:
-            generator = self.childGenerator
+        generator = self.recursiveChildGenerator if recursive else self.childGenerator
         return self._fetch(name, attrs, text, limit, generator)
     fetchChildren = fetch
     
@@ -509,14 +499,12 @@ class Tag(PageElement):
         """Initializes a map representation of this tag's attributes,
         if not already initialized."""
         if not getattr(self, 'attrMap'):
-            self.attrMap = {}
-            for (key, value) in self.attrs:
-                self.attrMap[key] = value 
+            self.attrMap = dict(self.attrs)
         return self.attrMap
 
     #Generator methods
     def childGenerator(self):
-        for i in range(0, len(self.contents)):
+        for i in range(len(self.contents)):
             yield self.contents[i]
         raise StopIteration
     
@@ -657,7 +645,7 @@ class BeautifulStoneSoup(Tag, SGMLParser):
         want."""
         Tag.__init__(self, self.ROOT_TAG_NAME)
         if avoidParserProblems \
-           and not isList(avoidParserProblems):
+               and not isList(avoidParserProblems):
             avoidParserProblems = self.PARSER_MASSAGE            
         self.avoidParserProblems = avoidParserProblems
         SGMLParser.__init__(self)
@@ -725,13 +713,9 @@ class BeautifulStoneSoup(Tag, SGMLParser):
         self.currentTag = self.tagStack[-1]
 
     def endData(self):
-        currentData = ''.join(self.currentData)
-        if currentData:
+        if currentData := ''.join(self.currentData):
             if not currentData.strip():
-                if '\n' in currentData:
-                    currentData = '\n'
-                else:
-                    currentData = ' '
+                currentData = '\n' if '\n' in currentData else ' '
             c = NavigableString
             if type(currentData) == types.UnicodeType:
                 c = NavigableUnicodeString
@@ -751,16 +735,20 @@ class BeautifulStoneSoup(Tag, SGMLParser):
         if name == self.ROOT_TAG_NAME:
             return            
 
-        numPops = 0
         mostRecentTag = None
-        for i in range(len(self.tagStack)-1, 0, -1):
-            if name == self.tagStack[i].name:
-                numPops = len(self.tagStack)-i
-                break
+        numPops = next(
+            (
+                len(self.tagStack) - i
+                for i in range(len(self.tagStack) - 1, 0, -1)
+                if name == self.tagStack[i].name
+            ),
+            0,
+        )
+
         if not inclusivePop:
             numPops = numPops - 1
 
-        for i in range(0, numPops):
+        for _ in range(numPops):
             mostRecentTag = self.popTag()
         return mostRecentTag    
 
@@ -795,11 +783,13 @@ class BeautifulStoneSoup(Tag, SGMLParser):
                 #last occurance.
                 popTo = name
                 break
-            if (nestingResetTriggers != None
-                and p.name in nestingResetTriggers) \
-                or (nestingResetTriggers == None and isResetNesting
-                    and self.RESET_NESTING_TAGS.has_key(p.name)):
-                
+            if (
+                (nestingResetTriggers != None and p.name in nestingResetTriggers)
+                or nestingResetTriggers is None
+                and isResetNesting
+                and self.RESET_NESTING_TAGS.has_key(p.name)
+            ):
+
                 #If we encounter one of the nesting reset triggers
                 #peculiar to this tag, or we encounter another tag
                 #that causes nesting to reset, pop up to but not
@@ -839,7 +829,7 @@ class BeautifulStoneSoup(Tag, SGMLParser):
         if self.quoteStack and self.quoteStack[-1] != name:
             #This is not a real end tag.
             #print "</%s> is not real!" % name
-            self.handle_data('</%s>' % name)
+            self.handle_data(f'</{name}>')
             return
         self.endData()
         self._popToTag(name)
@@ -852,23 +842,23 @@ class BeautifulStoneSoup(Tag, SGMLParser):
 
     def handle_pi(self, text):
         "Propagate processing instructions right through."
-        self.handle_data("<?%s>" % text)
+        self.handle_data(f"<?{text}>")
 
     def handle_comment(self, text):
         "Propagate comments right through."
-        self.handle_data("<!--%s-->" % text)
+        self.handle_data(f"<!--{text}-->")
 
     def handle_charref(self, ref):
         "Propagate char refs right through."
-        self.handle_data('&#%s;' % ref)
+        self.handle_data(f'&#{ref};')
 
     def handle_entityref(self, ref):
         "Propagate entity refs right through."
-        self.handle_data('&%s;' % ref)
+        self.handle_data(f'&{ref};')
         
     def handle_decl(self, data):
         "Propagate DOCTYPEs and the like right through."
-        self.handle_data('<!%s>' % data)
+        self.handle_data(f'<!{data}>')
 
     def parse_declaration(self, i):
         """Treat a bogus SGML declaration as raw data. Treat a CDATA
@@ -941,7 +931,7 @@ class BeautifulSoup(BeautifulStoneSoup):
                                            'spacer', 'link', 'frame', 'base'])
 
     QUOTE_TAGS = {'script': None}
-    
+
     #According to the HTML standard, each of these inline tags can
     #contain another tag of the same type. Furthermore, it's common
     #to actually use these tags this way.
@@ -979,7 +969,7 @@ class BeautifulSoup(BeautifulStoneSoup):
 
     NESTABLE_TAGS = buildTagMap([], NESTABLE_INLINE_TAGS, NESTABLE_BLOCK_TAGS,
                                 NESTABLE_LIST_TAGS, NESTABLE_TABLE_TAGS)
-    
+
 class ICantBelieveItsBeautifulSoup(BeautifulSoup):
 
     """The BeautifulSoup class is oriented towards skipping over

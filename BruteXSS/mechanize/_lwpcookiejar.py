@@ -51,9 +51,7 @@ def lwp_cookie_str(cookie):
 
     keys = cookie.nonstandard_attr_keys()
     keys.sort()
-    for k in keys:
-        h.append((k, str(cookie.get_nonstandard_attr(k))))
-
+    h.extend((k, str(cookie.get_nonstandard_attr(k))) for k in keys)
     h.append(("version", str(cookie.version)))
 
     return join_header_words([h])
@@ -88,7 +86,7 @@ class LWPCookieJar(FileCookieJar):
             if not ignore_expires and cookie.is_expired(now):
                 debug("   Not saving %s: expired", cookie.name)
                 continue
-            r.append("Set-Cookie3: %s" % lwp_cookie_str(cookie))
+            r.append(f"Set-Cookie3: {lwp_cookie_str(cookie)}")
         return "\n".join(r+[""])
 
     def save(self, filename=None, ignore_discard=False, ignore_expires=False):
@@ -110,7 +108,7 @@ class LWPCookieJar(FileCookieJar):
     def _really_load(self, f, filename, ignore_discard, ignore_expires):
         magic = f.readline()
         if not re.search(self.magic_re, magic):
-            msg = "%s does not seem to contain cookies" % filename
+            msg = f"{filename} does not seem to contain cookies"
             raise LoadError(msg)
 
         now = time.time()
@@ -133,15 +131,10 @@ class LWPCookieJar(FileCookieJar):
 
                 for data in split_header_words([line]):
                     name, value = data[0]
-                    standard = {}
                     rest = {}
-                    for k in boolean_attrs:
-                        standard[k] = False
+                    standard = {k: False for k in boolean_attrs}
                     for k, v in data[1:]:
-                        if k is not None:
-                            lc = k.lower()
-                        else:
-                            lc = None
+                        lc = k.lower() if k is not None else None
                         # don't lose case distinction for unknown fields
                         if (lc in value_attrs) or (lc in boolean_attrs):
                             k = lc
@@ -173,7 +166,7 @@ class LWPCookieJar(FileCookieJar):
                                h("commenturl"),
                                rest,
                                h("rfc2109"),
-                               ) 
+                               )
                     if not ignore_discard and c.discard:
                         continue
                     if not ignore_expires and c.is_expired(now):
@@ -181,5 +174,5 @@ class LWPCookieJar(FileCookieJar):
                     self.set_cookie(c)
         except:
             reraise_unmasked_exceptions((IOError,))
-            raise LoadError("invalid Set-Cookie3 format file %s" % filename)
+            raise LoadError(f"invalid Set-Cookie3 format file {filename}")
 

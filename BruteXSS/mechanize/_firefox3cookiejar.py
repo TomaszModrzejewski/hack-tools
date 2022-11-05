@@ -151,17 +151,14 @@ CREATE TABLE IF NOT EXISTS moz_cookies (id INTEGER PRIMARY KEY, name TEXT,
                     sql_params.append(name)
         where = " AND ".join(where_parts)
         if where:
-            where = " WHERE " + where
+            where = f" WHERE {where}"
         def clear(cur):
-            cur.execute("DELETE FROM moz_cookies%s" % where,
-                        tuple(sql_params))
+            cur.execute(f"DELETE FROM moz_cookies{where}", tuple(sql_params))
+
         self._transaction(clear)
 
     def _row_from_cookie(self, cookie, cur):
-        expires = cookie.expires
-        if cookie.discard:
-            expires = ""
-
+        expires = "" if cookie.discard else cookie.expires
         domain = unicode(cookie.domain)
         path = unicode(cookie.path)
         name = unicode(cookie.name)
@@ -204,8 +201,7 @@ INSERT INTO moz_cookies VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
     def __iter__(self):
         # session (non-persistent) cookies
-        for cookie in MappingIterator(self._cookies):
-            yield cookie
+        yield from MappingIterator(self._cookies)
         # persistent cookies
         for row in self._query("""\
 SELECT * FROM moz_cookies ORDER BY name, path, host"""):

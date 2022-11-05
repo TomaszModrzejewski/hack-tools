@@ -21,19 +21,19 @@ Usage:
 '''
 target_list=[]
 def stdout( name):
-	scanow ='[*] Scan %s.. '%(name)
+	scanow = f'[*] Scan {name}.. '
 	sys.stdout.write(str(scanow)+" "*20+"\b\b\r")
 	sys.stdout.flush()
 def extract_target(inputfile):
-		global target_list
-		inputdata=open(inputfile).read().replace("\r",'').split("\n")
-		for host in inputdata:
-			host=host.split(":")
-			if len(host)==2:
-				target_list.append("%s:%s"%(host[0],host[1]))
-			elif len(host)==1:
-				target_list.append("%s:6379"%(host[0]))	
-		return target_list	
+	global target_list
+	inputdata=open(inputfile).read().replace("\r",'').split("\n")
+	for host in inputdata:
+		host=host.split(":")
+		if len(host)==2:
+			target_list.append(f"{host[0]}:{host[1]}")
+		elif len(host)==1:
+			target_list.append(f"{host[0]}:6379")
+	return target_list	
 def send_dbsize(conn):
 	try:
 		conn.send("dbsize\n")
@@ -56,25 +56,20 @@ def conn_redis(args):
 		return False
 def run_task(target):
 	stdout(target)
-	conn=conn_redis(target)
-	if conn:
+	if conn := conn_redis(target):
 		size=send_dbsize(conn)
 		size=str(size)
 		if 'NOAUTH' not in size and ':' in size:
-			return  "[!] Find %s Unauthorized  "% target		
+			return f"[!] Find {target} Unauthorized  "		
 def main():
-	targetlist=[]
-	if len(argv)>2:
-		if argv[1]=='-f':
-			return extract_target(argv[2])
-		if argv[1]=='-i':
-			port=6379
-			if len(argv)==5:
-				port=int(argv[4])
-			targets = ipaddr.IPv4Network(argv[2])
-			for tar in targets:
-				targetlist.append("%s:%d"%(tar,port))
-			return targetlist
+	if len(argv) <= 2:
+		return
+	if argv[1]=='-f':
+		return extract_target(argv[2])
+	if argv[1]=='-i':
+		port = int(argv[4]) if len(argv)==5 else 6379
+		targets = ipaddr.IPv4Network(argv[2])
+		return ["%s:%d"%(tar,port) for tar in targets]
 				
 			
 		

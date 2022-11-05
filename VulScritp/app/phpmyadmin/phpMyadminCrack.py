@@ -38,11 +38,11 @@ def main():
     queue = Queue()
     url = sys.argv[1]
     passlist = open('password.txt','r')
-    for password in passlist.readlines():
+    for password in passlist:
         password = password.strip()
         queue.put(password)
 
-    for i in range(10):
+    for _ in range(10):
         c = MyThread()
         c.start()
 

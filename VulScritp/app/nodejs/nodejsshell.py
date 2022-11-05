@@ -18,7 +18,7 @@ def charencode(string):
     """String.CharCode"""
     encoded = ''
     for char in string:
-        encoded = encoded + "," + str(ord(char))
+        encoded = f"{encoded},{ord(char)}"
     return encoded[1:]
 
 print "[+] LHOST = %s" % (IP_ADDR)

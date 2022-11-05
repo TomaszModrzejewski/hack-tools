@@ -78,8 +78,10 @@ if __name__ == '__main__':
                       help=argparse.SUPPRESS)
     args = opts.parse_args()
 
-    hide_banner(hide=True if args.banner else False,
-                legal=True if args.legal else False) if args.version is False else hide_banner(hide=True)
+    hide_banner(
+        hide=bool(args.banner), legal=bool(args.legal)
+    ) if args.version is False else hide_banner(hide=True)
+
 
     LOGGER.info("Checking program integrity..")
 
@@ -89,26 +91,29 @@ if __name__ == '__main__':
             exit(1)
         integrity_check()
     except HTTPError:
-        check_fail = "Integrity check failed to connect "
-        check_fail += "you are running a non verified "
+        check_fail = (
+            "Integrity check failed to connect "
+            + "you are running a non verified "
+        )
+
         check_fail += "Pybelt, this may or may not be insecure. "
         check_fail += "Suggestion would be to re-download Pybelt from "
         check_fail += "{}"
         LOGGER.error(check_fail.format(CLONE_LINK))
         answer = prompt("Would you like to continue anyways[y/N] ")
-        if answer.upper().startswith("Y"):
-            pass
-        else:
-            err_msg = "Please download the latest version from "
-            err_msg += "{}"
+        if not answer.upper().startswith("Y"):
+            err_msg = "Please download the latest version from " + "{}"
             LOGGER.critical(err_msg.format(CLONE_LINK))
 
     try:
         if len(sys.argv) == 1:  # If you failed to provide an argument
             prompt = pybelt_shell.PybeltConsole()  # Launch the shell
-            prompt.prompt = "{}@pybelt > ".format(getpass.getuser())
-            info_message = "You have failed to provide a flag so you have been "
-            info_message += "redirected to the Pybelt Console. For available "
+            prompt.prompt = f"{getpass.getuser()}@pybelt > "
+            info_message = (
+                "You have failed to provide a flag so you have been "
+                + "redirected to the Pybelt Console. For available "
+            )
+
             info_message += "flags type: 'run -hh', to see help type: 'help' "
             info_message += "to exit the console type: 'quit'"
             try:

@@ -291,22 +291,17 @@ def ip2bin(ip):
 def dec2bin(n,d=None):
 	s = ""
 	while n>0:
-		if n&1:
-			s = "1"+s
-		else:
-			s = "0"+s
+		s = f"1{s}" if n&1 else f"0{s}"
 		n >>= 1
 	if d is not None:
 		while len(s)<d:
-			s = "0"+s
+			s = f"0{s}"
 	if s == "": s = "0"
 	return s
 
 # convert a binary string into an IP address
 def bin2ip(b):
-	ip = ""
-	for i in range(0,len(b),8):
-		ip += str(int(b[i:i+8],2))+"."
+	ip = "".join(f"{int(b[i:i + 8], 2)}." for i in range(0,len(b),8))
 	return ip[:-1]
 
 # print a list of IP addresses based on the CIDR block specified
@@ -358,13 +353,12 @@ def pinger():
 			p=Popen(['ping','-c 2',ip],stdout=PIPE)
 			m = re.search('(\d)\sreceived', p.stdout.read())
 			try:
-				if m.group(1)!='0':
+				if m[1] != '0':
 					pinglist.append(ip)
-			except:pass		
+			except:pass
 		if platform.system()=='Windows':
-			p=Popen('ping -n 2 ' + ip, stdout=PIPE)
-			m = re.search('TTL', p.stdout.read())
-			if m:
+			p = Popen(f'ping -n 2 {ip}', stdout=PIPE)
+			if m := re.search('TTL', p.stdout.read()):
 				pinglist.append(ip)
 		q.task_done()
 
@@ -380,33 +374,32 @@ def pingsubnet(q):
 				p=Popen(['ping','-c 2',gt],stdout=PIPE)
 				m = re.search('(\d)\sreceived', p.stdout.read())
 				gt=gt.split('.')
-				gt=gt[0]+'.'+gt[1]+'.'+gt[2]+'.'+'0'
+				gt = f'{gt[0]}.{gt[1]}.{gt[2]}.0'
 			except:pass
 			try:
-				if m.group(1)!='0':
-					pinglist.append(gt)	
+				if m[1] != '0':
+					pinglist.append(gt)
 				else:
 					p=Popen(['ping','-c 2 -b',bc],stdout=PIPE)
 					m = re.search('(\d)\sreceived', p.stdout.read())
 					try:
-						if m.group(1)!='0':
+						if m[1] != '0':
 							pinglist.append(gt)
 					except:pass
-			except:pass			
+			except:pass
 		if platform.system()=='Windows':
 			try:
-				p=Popen('ping -n 2 ' + gt, stdout=PIPE)
+				p = Popen(f'ping -n 2 {gt}', stdout=PIPE)
 				m = re.search('TTL', p.stdout.read())
 				gt=gt.split('.')
-				gt=gt[0]+'.'+gt[1]+'.'+gt[2]+'.'+'0'
+				gt = f'{gt[0]}.{gt[1]}.{gt[2]}.0'
 				if m:	
 					pinglist.append(gt)
 				else:
-					p=Popen('ping -n 2 ' + bc, stdout=PIPE)
-					m = re.search('TTL', p.stdout.read())
-					if m:
+					p = Popen(f'ping -n 2 {bc}', stdout=PIPE)
+					if m := re.search('TTL', p.stdout.read()):
 						pinglist.append(gt)
-			except:pass			
+			except:pass
 		q.task_done()		
 
 def networkdiscovery(subclass):

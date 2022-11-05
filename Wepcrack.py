@@ -162,7 +162,7 @@ def get_name(cell):
 
 def get_quality(cell):
 	quality = matching_line(cell, "Quality=").split()[0].split('/')
-	return str(int(round(float(quality[0]) / float(quality[1]) * 100))).rjust(3) + " %"
+	return f"{str(int(round(float(quality[0]) / float(quality[1]) * 100))).rjust(3)} %"
 
 def get_channel(cell):
 	return matching_line(cell, "Channel:")
@@ -179,12 +179,12 @@ def get_encryption(cell):
 			matching = match(line, "IE:")
 			if matching != None:
 				wpa = match(matching, "WPA")
-				if wpa != None:
-					enc = "WPA"
-				else:
+				if wpa is None:
 					wpa = match(matching, "IEEE 802.11i/WPA2")
 					if wpa != None:
 						enc = "WPA2"
+				else:
+					enc = "WPA"
 		if enc == "":
 			enc = "WEP"
 		if tkip:
@@ -218,16 +218,13 @@ def matching_line(lines, keyword):
 def match(line,keyword):
 	line = line.lstrip()
 	length = len(keyword)
-	if line[:length] == keyword:
-		return line[length:]
-	else:
-		return None
+	return line[length:] if line[:length] == keyword else None
 
 def parse_cell(cell):
 	parsed_cell = {}
 	for key in rules:
 		rule = rules[key]
-		parsed_cell.update({ key: rule(cell) })
+		parsed_cell[key] = rule(cell)
 	return parsed_cell
 
 def print_table(table):
@@ -247,8 +244,7 @@ def print_table(table):
 
 def print_cells(cells):
 	table = [columns]
-	counter = 1
-	for cell in cells:
+	for counter, cell in enumerate(cells, start=1):
 		cell_properties=[]
 		for column in columns:
 			if column == '#':
@@ -256,7 +252,6 @@ def print_cells(cells):
 			else:
 				cell_properties.append(cell[column])
 		table.append(cell_properties)
-		counter += 1
 	print_table(table)
 
 def main():

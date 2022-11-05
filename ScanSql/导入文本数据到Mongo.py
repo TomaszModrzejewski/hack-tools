@@ -11,7 +11,7 @@ def main(file_name):
     """"""
     import pymongo
     db = pymongo.MongoClient('nofiht.ml')['from_tecent']['url']
-    for i in open('/tmp/ss').readlines():
+    for i in open('/tmp/ss'):
         db.insert({'url':i.strip()})
     db.ensure_index('url',unique=True)
 if __name__=='__main__':

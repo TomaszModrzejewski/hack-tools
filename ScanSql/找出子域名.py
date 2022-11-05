@@ -19,9 +19,9 @@ class SubMain():
 
     def __init__(self, submain):
         self.submain = submain
-        self.url_360 = 'http://webscan.360.cn/sub/index/?url=%s' % self.submain
+        self.url_360 = f'http://webscan.360.cn/sub/index/?url={self.submain}'
         self.url_link = 'http://i.links.cn/subdomain/'
-        self.link_post = 'domain=%s&b2=1&b3=1&b4=1' % self.submain
+        self.link_post = f'domain={self.submain}&b2=1&b3=1&b4=1'
         self.sublist = []
 
     def get_360(self):

@@ -37,8 +37,7 @@ class CachingGeneratorFunction(object):
 
     def __call__(self):
         cache = self._cache
-        for item in cache:
-            yield item
+        yield from cache
         for item in self._iterator:
             cache.append(item)
             yield item
@@ -56,7 +55,7 @@ class EncodingFinder:
                 if k == "charset":
                     encoding = v
                     try:
-                        codecs.lookup(v)
+                        codecs.lookup(encoding)
                     except LookupError:
                         continue
                     else:
@@ -259,8 +258,7 @@ class TitleFactory:
             if tok.type == "data":
                 text.append(str(tok))
             elif tok.type == "entityref":
-                t = unescape("&%s;" % tok.data,
-                             parser._entitydefs, parser.encoding)
+                t = unescape(f"&{tok.data};", parser._entitydefs, parser.encoding)
                 text.append(t)
             elif tok.type == "charref":
                 t = unescape_charref(tok.data, parser.encoding)
@@ -317,12 +315,11 @@ def unescape_charref(data, encoding):
     uc = unichr(int(name, base))
     if encoding is None:
         return uc
-    else:
-        try:
-            repl = uc.encode(encoding)
-        except UnicodeError:
-            repl = "&#%s;" % data
-        return repl
+    try:
+        repl = uc.encode(encoding)
+    except UnicodeError:
+        repl = f"&#{data};"
+    return repl
 
 
 class MechanizeBs(_beautifulsoup.BeautifulSoup):
@@ -341,10 +338,10 @@ class MechanizeBs(_beautifulsoup.BeautifulSoup):
             self, text, avoidParserProblems, initialTextIsEverything)
 
     def handle_charref(self, ref):
-        t = unescape("&#%s;"%ref, self._entitydefs, self._encoding)
+        t = unescape(f"&#{ref};", self._entitydefs, self._encoding)
         self.handle_data(t)
     def handle_entityref(self, ref):
-        t = unescape("&%s;"%ref, self._entitydefs, self._encoding)
+        t = unescape(f"&{ref};", self._entitydefs, self._encoding)
         self.handle_data(t)
     def unescape_attrs(self, attrs):
         escaped_attrs = []
@@ -406,10 +403,7 @@ class RobustLinksFactory:
                 text = link.fetchText(lambda t: True)
                 if not text:
                     # follow _pullparser's weird behaviour rigidly
-                    if link.name == "a":
-                        text = ""
-                    else:
-                        text = None
+                    text = "" if link.name == "a" else None
                 else:
                     text = self.compress_re.sub(" ", " ".join(text).strip())
                 yield Link(base_url, url, text, link.name, attrs)
@@ -439,9 +433,8 @@ class RobustTitleFactory:
         title = self._bs.first("title")
         if title == _beautifulsoup.Null:
             return None
-        else:
-            inner_html = "".join([str(node) for node in title.contents])
-            return COMPRESS_RE.sub(" ", inner_html.strip())
+        inner_html = "".join([str(node) for node in title.contents])
+        return COMPRESS_RE.sub(" ", inner_html.strip())
 
 
 class Factory:
@@ -535,10 +528,7 @@ class Factory:
                 copy.copy(self._response), self.encoding)
             return self.is_html
         elif name == "title":
-            if self.is_html:
-                self.title = self._title_factory.title()
-            else:
-                self.title = None
+            self.title = self._title_factory.title() if self.is_html else None
             return self.title
         elif name == "global_form":
             self.forms()

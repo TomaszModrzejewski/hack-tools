@@ -14,8 +14,8 @@ class HashChecker(object):
                 self.found = True
                 self.enumerate_hash_types(HASH_TYPE_REGEX[algorithm])
         if self.found is False:
-            error_message = "Unable to verify hash type "
-            error_message += "for hash: '{}'. This could mean ".format(self.hash)
+            error_message = f"Unable to verify hash type for hash: '{self.hash}'. This could mean "
+
             error_message += "that this is not a valid hash, or that "
             error_message += "this hash is not supported by Pybelt "
             error_message += "yet. If you feel this should be supported "
@@ -25,11 +25,11 @@ class HashChecker(object):
 
     @staticmethod
     def enumerate_hash_types(items, max_likeliest=3):
-        LOGGER.info("{} possible hash types found..".format(len(items)))
+        LOGGER.info(f"{len(items)} possible hash types found..")
         for count, item in enumerate(items, start=1):
             if count <= max_likeliest:
-                print("\033[92m[*] Most likely possible hash type: {}\033[0m".format(item))
+                print(f"\033[92m[*] Most likely possible hash type: {item}\033[0m")
                 if count == max_likeliest:
                     print("")
             else:
-                print("\033[33m[*] Least likely possible hash type: {}\033[0m".format(item))
+                print(f"\033[33m[*] Least likely possible hash type: {item}\033[0m")

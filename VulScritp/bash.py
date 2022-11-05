@@ -25,7 +25,6 @@ def bash_exp(url):
 		print u"访问网页超时%s"%(url)
 
 if __name__=='__main__':
-	f = open('target.txt','r')
-	for i in f.readlines():
-		bash_exp(urllib.unquote(i))
-	f.close()
+	with open('target.txt','r') as f:
+		for i in f:
+			bash_exp(urllib.unquote(i))

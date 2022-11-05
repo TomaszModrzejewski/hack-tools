@@ -30,9 +30,12 @@ VERSION = "1.0.12.27"
 TYPE_COLORS = {"dev": 33, "stable": 92}
 
 # Type of version that the program is in "dev" or "stable"
-VERSION_STRING = "\033[92m{}\033[0m(\033[{}m\033[1mdev\033[0m)".format(VERSION, TYPE_COLORS["dev"]) if len(
-    VERSION) >= 4 else \
-    "\033[92m{}\033[0m(\033[{}m\033[1mstable\033[0m)".format(VERSION, TYPE_COLORS["stable"])
+VERSION_STRING = (
+    f'\033[92m{VERSION}\033[0m(\033[{TYPE_COLORS["dev"]}m\033[1mdev\033[0m)'
+    if len(VERSION) >= 4
+    else f'\033[92m{VERSION}\033[0m(\033[{TYPE_COLORS["stable"]}m\033[1mstable\033[0m)'
+)
+
 
 # Basic legal disclaimer
 LEGAL_DISC = "[!] legal disclaimer: This program is intended for learning purposes, any malicious intent is on you, " \
@@ -55,8 +58,14 @@ CLONE_LINK = "https://github.com/ekultek/pybelt.git"
 MD5_CHECKSUM_URL = "https://raw.githubusercontent.com/Ekultek/Pybelt/master/docs/checksum.md5"
 
 # Random common column names, and random user agents
-RANDOM_COMMON_COLUMN = random.choice(open("{}/lib/text_files/common_columns.txt".format(PATH)).readlines())
-RANDOM_USER_AGENT = random.choice(open("{}/lib/text_files/agents.txt".format(PATH)).readlines()).strip()
+RANDOM_COMMON_COLUMN = random.choice(
+    open(f"{PATH}/lib/text_files/common_columns.txt").readlines()
+)
+
+RANDOM_USER_AGENT = random.choice(
+    open(f"{PATH}/lib/text_files/agents.txt").readlines()
+).strip()
+
 
 # Search query regex to make sure the URLS have a GET parameter
 QUERY_REGEX = re.compile(r"(.*)[?|#](.*){1}\=(.*)")
@@ -167,12 +176,14 @@ BANNER = """\033[94m
 """.format(VERSION_STRING, SAYING.strip(), CLONE_LINK)
 
 # Path the the search results
-DORK_SCAN_RESULTS_PATH = r"{}\lib\core\dork_check\scan_results".format(os.getcwd())
-PROXY_SCAN_RESULTS = r"{}\lib\core\proxy_finder\proxy_results".format(PATH)
+DORK_SCAN_RESULTS_PATH = f"{os.getcwd()}\lib\core\dork_check\scan_results"
+PROXY_SCAN_RESULTS = f"{PATH}\lib\core\proxy_finder\proxy_results"
 
-# Error message for when Google blocks your IP address
-GOOGLE_TEMP_BLOCK_ERROR_MESSAGE = "\nYou have been temporarily blocked from running Google searches."
-GOOGLE_TEMP_BLOCK_ERROR_MESSAGE += " As of now there is no way around this. You will need to:\n"
+GOOGLE_TEMP_BLOCK_ERROR_MESSAGE = (
+    "\nYou have been temporarily blocked from running Google searches."
+    + " As of now there is no way around this. You will need to:\n"
+)
+
 GOOGLE_TEMP_BLOCK_ERROR_MESSAGE += "\tA) Change your IP address.\n"
 GOOGLE_TEMP_BLOCK_ERROR_MESSAGE += "\tB) Wait about an hour for Google to lift the ban.\n"
 GOOGLE_TEMP_BLOCK_ERROR_MESSAGE += "\tC) Manually check your Dorks.\n"
@@ -245,12 +256,12 @@ def decode64(string):
 
 def prompt(question):
     """ Ask a question.. """
-    return raw_input("[{} PROMPT] {}".format(time.strftime("%I:%M:%S"), question))
+    return raw_input(f'[{time.strftime("%I:%M:%S")} PROMPT] {question}')
 
 
 def create_wordlist(b64link):
     """ Create a word list from a base64encoded URL by decoding it and connecting to it"""
-    path = "{}/lib/text_files/wordlist.txt".format(PATH)
+    path = f"{PATH}/lib/text_files/wordlist.txt"
     data = urllib2.urlopen(base64.b64decode(b64link)).read()
     open(path, "w").close()
     with open(path, 'a+') as wordlist:
@@ -268,8 +279,12 @@ def create_dir(dir_path):
 def hide_banner(hide=False, legal=False):
     """ Hide the banner """
     if hide is False:
-        print(BANNER + "\033[91m{}\033[0m".format(LEGAL_DISC) + "\n") if legal is False else \
-            BANNER + "\033[91m{}\033[0m".format(LONG_LEGAL_DISCLAIMER + "\n")
+        print(
+            f"{BANNER}\033[91m{LEGAL_DISC}\033[0m" + "\n"
+        ) if legal is False else BANNER + "\033[91m{}\033[0m".format(
+            LONG_LEGAL_DISCLAIMER + "\n"
+        )
+
     else:
         return
 
@@ -282,30 +297,26 @@ def update_pybelt():
     if "Already up-to-date." in updater:
         LOGGER.warn("Pybelt is even with origin master.")
         exit(0)
-    elif "error" or "Error" in updater:
-        error_message = "Unable to update Pybelt, an error occurred "
-        error_message += "the newest version can be found here: {}".format(CLONE_LINK)
+    else:
+        error_message = f"Unable to update Pybelt, an error occurred the newest version can be found here: {CLONE_LINK}"
+
         LOGGER.error(error_message)
         exit(1)
-    else:
-        LOGGER.info("Pybelt has been updated successfully to {}".format(VERSION))
-        exit(0)
 
 
 def integrity_check(url=MD5_CHECKSUM_URL):
     """ Check the integrity of the application """
-    if open("{}/docs/checksum.md5".format(PATH)).read() == urllib2.urlopen(url).read():
-        pass
-    else:
-        checksum_fail = "MD5 sums did not match from origin master, "
-        checksum_fail += "integrity check has failed, this could be because "
+    if open(f"{PATH}/docs/checksum.md5").read() != urllib2.urlopen(url).read():
+        checksum_fail = (
+            "MD5 sums did not match from origin master, "
+            + "integrity check has failed, this could be because "
+        )
+
         checksum_fail += "there is a new version available."
         LOGGER.fatal(checksum_fail)
         update = prompt("Would you like to update to the latest version[y/N]: ")
         if update.upper().startswith("Y"):
             update_pybelt()
-        else:
-            pass
 
 
 def replace_http(url):
@@ -325,8 +336,5 @@ def replace_http(url):
 
 def verify_py_version():
     version_tuple = sys.version_info
-    version = "{}.{}".format(version_tuple[0], version_tuple[1])
-    if version >= "2.7" <= "3.0":
-        return True
-    else:
-        return False
+    version = f"{version_tuple[0]}.{version_tuple[1]}"
+    return version >= "2.7" <= "3.0"

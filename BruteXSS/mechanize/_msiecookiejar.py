@@ -148,25 +148,10 @@ class MSIEBase:
             secure = ((flags & 0x2000) != 0)
             filetime = (cookie["HIXP"] << 32) + cookie["LOXP"]
             expires = epoch_time_offset_from_win32_filetime(filetime)
-            if expires < now:
-                discard = True
-            else:
-                discard = False
+            discard = expires < now
             domain = cookie["DOMAIN"]
             initial_dot = domain.startswith(".")
-            if initial_dot:
-                domain_specified = True
-            else:
-                # MSIE 5 does not record whether the domain cookie-attribute
-                # was specified.
-                # Assuming it wasn't is conservative, because with strict
-                # domain matching this will match less frequently; with regular
-                # Netscape tail-matching, this will match at exactly the same
-                # times that domain_specified = True would.  It also means we
-                # don't have to prepend a dot to achieve consistency with our
-                # own & Mozilla's domain-munging scheme.
-                domain_specified = False
-
+            domain_specified = bool(initial_dot)
             # assume path_specified is false
             # XXX is there other stuff in here? -- e.g. comment, commentURL?
             c = Cookie(0,
@@ -207,7 +192,7 @@ class MSIEBase:
 
         data = index.read(256)
         if len(data) != 256:
-            raise LoadError("%s file is too short" % filename)
+            raise LoadError(f"{filename} file is too short")
 
         # Cookies' index.dat file starts with 32 bytes of signature
         # followed by an offset to the first record, stored as a little-
@@ -234,7 +219,7 @@ class MSIEBase:
             d = index.read(to_read)
             if len(d) != to_read:
                 break
-            data = data + d
+            data += d
 
             # Each record starts with a 4-byte signature and a count
             # (little-endian DWORD) of sectors for the record.
@@ -253,10 +238,13 @@ class MSIEBase:
 ##             print
 
             if sig != "URL ":
-                assert sig in ("HASH", "LEAK", \
-                               self.padding, "\x00\x00\x00\x00"), \
-                               "unrecognized MSIE index.dat record: %s" % \
-                               binary_to_str(sig)
+                assert sig in (
+                    "HASH",
+                    "LEAK",
+                    self.padding,
+                    "\x00\x00\x00\x00",
+                ), f"unrecognized MSIE index.dat record: {binary_to_str(sig)}"
+
                 if sig == "\x00\x00\x00\x00":
                     # assume we've got all the cookies, and stop
                     break
@@ -277,9 +265,8 @@ class MSIEBase:
 
             cookie_re = ("Cookie\:%s\@([\x21-\xFF]+).*?" % username +
                          "(%s\@[\x21-\xFF]+\.txt)" % username)
-            m = re.search(cookie_re, data, re.I)
-            if m:
-                cookie_file = os.path.join(cookie_dir, m.group(2))
+            if m := re.search(cookie_re, data, re.I):
+                cookie_file = os.path.join(cookie_dir, m[2])
                 if not self.delayload:
                     try:
                         self.load_cookie_data(cookie_file,
@@ -288,7 +275,7 @@ class MSIEBase:
                         debug("error reading cookie file, skipping: %s",
                               cookie_file)
                 else:
-                    domain = m.group(1)
+                    domain = m[1]
                     i = domain.find("/")
                     if i != -1:
                         domain = domain[:i]

@@ -159,7 +159,7 @@ class UserAgentBase(_opener.OpenerDirector):
             else:
                 del want[scheme]  # already got it
         # add the scheme handlers that are missing
-        for scheme in want.keys():
+        for scheme in want:
             self._set_handler(scheme, True)
 
     def set_cookiejar(self, cookiejar):
@@ -331,8 +331,7 @@ class UserAgentBase(_opener.OpenerDirector):
     def _replace_handler(self, name, newhandler=None):
         # first, if handler was previously added, remove it
         if name is not None:
-            handler = self._ua_handlers.get(name)
-            if handler:
+            if handler := self._ua_handlers.get(name):
                 try:
                     self.handlers.remove(handler)
                 except ValueError:

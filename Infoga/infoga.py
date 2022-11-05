@@ -78,10 +78,9 @@ class Infoga(object):
 			if x not in allemail:
 				allemail.append(x)
 		try:
-			for x in range(len(allemail)):
-				self.printf.plus("Email: %s"%(allemail[x]))
-				data = {'lang':'en'}
-				data['email'] = allemail[x]
+			for item in allemail:
+				self.printf.plus(f"Email: {item}")
+				data = {'lang': 'en', 'email': item}
 				req = requests.packages.urllib3.disable_warnings()
 				req = requests.post("http://mailtester.com/testmail.php",data=data,verify=False)
 				regex = re.compile("[0-9]+(?:\.[0-9]+){3}")
@@ -90,40 +89,42 @@ class Infoga(object):
 				for e in ip:
 					if e not in new:
 						new.append(e)
-				for s in range(len(new)):
+				for item_ in new:
 					req = requests.packages.urllib3.disable_warnings()
-					req = requests.get("https://api.shodan.io/shodan/host/"+new[s]+"?key=UNmOjxeFS2mPA3kmzm1sZwC0XjaTTksy",verify=False)
+					req = requests.get(
+						f"https://api.shodan.io/shodan/host/{item_}?key=UNmOjxeFS2mPA3kmzm1sZwC0XjaTTksy",
+						verify=False,
+					)
+
 					jso = json.loads(req.content,"utf-8")
 					try:
-						self.sock = socket.gethostbyaddr(new[s])[0]
+						self.sock = socket.gethostbyaddr(item_)[0]
 					except  socket.herror as err:
 						try:
 							self.sock = jso["hostnames"][0]
 						except KeyError as err:
 							pass
-					if "country_code" and "country_name" in jso:
-						self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
-						self.printf.info("Country: %s (%s)"%(jso["country_code"],jso["country_name"]))
-						self.printf.info("City: %s (%s)"%(jso["city"],jso["region_code"]))
-						self.printf.info("ASN: %s"%(jso["asn"]))
-						self.printf.info("ISP: %s"%(jso["isp"]))
-						self.printf.info("Geolocation: %s"%("https://www.google.com/maps/@%s,%s,9z"%(jso["latitude"],jso["longitude"])))
-						self.printf.info("Hostname: %s"%(jso["hostnames"][0]))
-						self.printf.info("Organization: %s"%(jso["org"]))
-						self.printf.info("Ports: %s"%(jso["ports"]))
-						if "vulns" in jso:
-							self.printf.info("Vulns: %s"%(jso["vulns"][0]))
-						print ""
+					if "country_name" in jso:
+						self.printf.ip(f"IP: {item_} ({self.sock})")
+						self.printf.info(f'Country: {jso["country_code"]} ({jso["country_name"]})')
+						self.printf.info(f'City: {jso["city"]} ({jso["region_code"]})')
+						self.printf.info(f'ASN: {jso["asn"]}')
+						self.printf.info(f'ISP: {jso["isp"]}')
+						self.printf.info(
+							f'Geolocation: https://www.google.com/maps/@{jso["latitude"]},{jso["longitude"]},9z'
+						)
 
-					elif "No information available for that IP." or "error" in jso:
-						self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
-						self.printf.info("No information available for that ip :(",color="r")
-						print ""
+						self.printf.info(f'Hostname: {jso["hostnames"][0]}')
+						self.printf.info(f'Organization: {jso["org"]}')
+						self.printf.info(f'Ports: {jso["ports"]}')
+						if "vulns" in jso:
+							self.printf.info(f'Vulns: {jso["vulns"][0]}')
 					else:
-						self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
-						print ""
+						self.printf.ip(f"IP: {item_} ({self.sock})")
+						self.printf.info("No information available for that ip :(",color="r")
+					self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
 		except Exception as error:
-			pass 
+			pass
 		sys.exit()
 
 	def checkurl(self,url):
@@ -131,15 +132,8 @@ class Infoga(object):
 		netloc = urlparse.urlsplit(url).netloc
 		path = urlparse.urlsplit(url).path
 		if netloc == "":
-			if path.startswith("www."):
-				return path.split("www.")[1]
-			else:
-				return path
-		if netloc != "":
-			if netloc.startswith("www."):
-				return netloc.split("www.")[1]
-			else:
-				return netloc
+			return path.split("www.")[1] if path.startswith("www.") else path
+		return netloc.split("www.")[1] if netloc.startswith("www.") else netloc
 
 	def checkemail(self,email):
 		if '@' not in email:
@@ -150,8 +144,7 @@ class Infoga(object):
 	def getinfo(self,email):
 		self.printf.test("Checking email info...")
 		try:
-			data = {'lang':'en'}
-			data['email'] = email 
+			data = {'lang': 'en', 'email': email}
 			req = requests.packages.urllib3.disable_warnings()
 			req = requests.post("http://mailtester.com/testmail.php",data=data,verify=False)
 			regex = re.compile("[0-9]+(?:\.[0-9]+){3}")
@@ -160,39 +153,41 @@ class Infoga(object):
 			for e in ip:
 				if e not in new:
 					new.append(e)
-			self.printf.plus("Email: %s"%email)
-			for s in range(len(new)):
+			self.printf.plus(f"Email: {email}")
+			for item in new:
 				req = requests.packages.urllib3.disable_warnings()
-				req = requests.get("https://api.shodan.io/shodan/host/"+new[s]+"?key=UNmOjxeFS2mPA3kmzm1sZwC0XjaTTksy",verify=False)
+				req = requests.get(
+					f"https://api.shodan.io/shodan/host/{item}?key=UNmOjxeFS2mPA3kmzm1sZwC0XjaTTksy",
+					verify=False,
+				)
+
 				jso = json.loads(req.content)
 				try:
-					self.sock = socket.gethostbyaddr(new[s])[0]
+					self.sock = socket.gethostbyaddr(item)[0]
 				except socket.herror as err:
 					try:
 						self.sock = jso["hostnames"][0]
 					except KeyError as err:
 						pass
-				if "country_code" and "country_name" in jso:
-					self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
-					self.printf.info("Country: %s (%s)"%(jso["country_code"],jso["country_name"]))
-					self.printf.info("City: %s (%s)"%(jso["city"],jso["region_code"]))
-					self.printf.info("ASN: %s"%(jso["asn"]))
-					self.printf.info("ISP: %s"%(jso["isp"]))
-					self.printf.info("Geolocation: %s"%("https://www.google.com/maps/@%s,%s,9z"%(jso["latitude"],jso["longitude"])))
-					self.printf.info("Hostname: %s"%(jso["hostnames"][0]))
-					self.printf.info("Organization: %s"%(jso["org"]))
-					self.printf.info("Ports: %s"%(jso["ports"]))
-					if 'vulns' in jso:
-						self.printf.info("Vulns: %s"%(jso["vulns"][0]))
-					print ""
-				
-				elif "No information available for that IP." or "error" in jso:
-					self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
-					self.printf.info("No information available for that ip :(",color="r")
-					print ""
+				if "country_name" in jso:
+					self.printf.ip(f"IP: {item} ({self.sock})")
+					self.printf.info(f'Country: {jso["country_code"]} ({jso["country_name"]})')
+					self.printf.info(f'City: {jso["city"]} ({jso["region_code"]})')
+					self.printf.info(f'ASN: {jso["asn"]}')
+					self.printf.info(f'ISP: {jso["isp"]}')
+					self.printf.info(
+						f'Geolocation: https://www.google.com/maps/@{jso["latitude"]},{jso["longitude"]},9z'
+					)
 
+					self.printf.info(f'Hostname: {jso["hostnames"][0]}')
+					self.printf.info(f'Organization: {jso["org"]}')
+					self.printf.info(f'Ports: {jso["ports"]}')
+					if 'vulns' in jso:
+						self.printf.info(f'Vulns: {jso["vulns"][0]}')
 				else:
-					self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
+					self.printf.ip(f"IP: {item} ({self.sock})")
+					self.printf.info("No information available for that ip :(",color="r")
+				self.printf.ip("IP: %s (%s)"%(new[s],self.sock))
 		except Exception as error:
 			pass
 		sys.exit()

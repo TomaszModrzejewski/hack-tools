@@ -28,7 +28,7 @@ class HashCracker(object):
                 self.results[data.hexdigest()] = [word.strip(), alg]
         LOGGER.info("Created %i hashes, verifying against given hash (%s)" % (len(self.results), self.hash))
         if self.verify_hashes() is False:
-            LOGGER.fatal("Unable to verify hash: %s" % self.hash)
+            LOGGER.fatal(f"Unable to verify hash: {self.hash}")
         else:
             return self.verify_hashes()
 
@@ -41,10 +41,11 @@ class HashCracker(object):
             data.update(word.strip())
             self.results[data.hexdigest()] = [word.strip(), self.type]
         LOGGER.info("Created %i hashes to verify.." % len(self.results.keys()))
-        LOGGER.info("Attempting to crack hash (%s).." % self.hash)
+        LOGGER.info(f"Attempting to crack hash ({self.hash})..")
         if self.verify_hashes() is False:
             error_message = "Unable to verify %s against %i different hashes." % (self.hash, len(self.results))
-            error_message += " You used algorithm: %s you can attempt all algorithms " % str(self.type).upper()
+            error_message += f" You used algorithm: {str(self.type).upper()} you can attempt all algorithms "
+
             error_message += "available on the system by running with 'all' as the hash type. "
             error_message += "IE: python pybelt.py -c 9a8b1b7eee229046fc2701b228fc2aff:all"
             LOGGER.fatal(error_message)
@@ -62,7 +63,7 @@ class HashCracker(object):
         while self.cracked is False:
             for h in self.results.keys():
                 if self.hash == h:
-                    hash_results = "Original Hash: %s" % self.hash
+                    hash_results = f"Original Hash: {self.hash}"
                     hash_results += "\n%sAlgorithm Used: %s" % (spacer, self.results[self.hash][1].upper())
                     hash_results += "\n%sPlain Text: %s" % (spacer, self.results[self.hash][0])
                     LOGGER.info(hash_results)

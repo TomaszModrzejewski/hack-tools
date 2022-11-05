@@ -48,13 +48,13 @@ def referer_list():
 	headers_referers.append('http://www.google.com/?q=')
 	headers_referers.append('http://www.usatoday.com/search/results?q=')
 	headers_referers.append('http://engadget.search.aol.com/search?q=')
-	headers_referers.append('http://' + host + '/')
+	headers_referers.append(f'http://{host}/')
 	return(headers_referers)
 	
 #builds random ascii string
 def buildblock(size):
 	out_str = ''
-	for i in range(0, size):
+	for _ in range(size):
 		a = random.randint(65, 90)
 		out_str += chr(a)
 	return(out_str)
